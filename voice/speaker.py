@@ -18,13 +18,13 @@ def speak(text :str):
     audio_chunks = [] #All the audio broken down into textual chunks
 
     #synthesize() function yields audio chunks and processes them as text
-    for audio_bytes in voice.synthesize_stream_raw(text):
-        audio_chunks.append(np.frombuffer(audio_bytes, dtype=np.int16)) #Store all the the audio chunks into numpy array
+    for audio_chunk in voice.synthesize(text):
+        audio_chunks.append(audio_chunk.audio_int16_array) #Store all the the audio chunks into int16 audio array
 
     audio_array = np.concatenate(audio_chunks) #String all the chunks together
     audio_float = audio_array.astype(np.float32) / 32768.0 #Conversion from int16 PCM top float32 for sounddevice to play it
  
-    sd.play(audio_float, samplerate=SAMPLE_RATE) #Play the audio based on the given sample rate
+    sd.play(audio_float, samplerate=voice.config.sample_rate) #Play the audio based on the given sample rate
     sd.wait() #Wait for it to finish
 
 

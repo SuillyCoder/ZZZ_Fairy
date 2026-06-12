@@ -7,6 +7,7 @@
 #Voice:
 from voice.listener import listen_for_wakeword, listen_for_request
 from voice.speaker import speak
+import time
 
 # Boot up message
 speak("Greetings, Master Proxy! Fairy online. Awaiting your request.")
@@ -14,5 +15,7 @@ speak("Greetings, Master Proxy! Fairy online. Awaiting your request.")
 # Main loop
 while True:
     listen_for_wakeword()          # Standby until wake word is detected
-    command = listen_for_request() # Capture the command
-    speak(f"You said: {command}")  # Echo back for now — Ollama replaces this in Phase 3
+    speak("Yes, Master Proxy?")       # Audio cue — start speaking after this
+    fairy_request = listen_for_request() # Capture the command
+    if fairy_request:
+        speak(f"You said: {fairy_request}")  # Echo back for now — Ollama replaces this in Phase 3
