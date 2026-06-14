@@ -15,11 +15,22 @@ voice = PiperVoice.load(VOICE_MODEL_PATH, config_path=VOICE_CONFIG_PATH,)
 #Function for Fairy to speak
 def speak(text :str):
     print(f"Fairy says: {text}")
+
+    #A guard to check if text has actually been administered
+    if not text or not text.strip:   
+        print("[Speaker]: Nothing to say — empty response received.")
+        return
+    
     audio_chunks = [] #All the audio broken down into textual chunks
 
     #synthesize() function yields audio chunks and processes them as text
     for audio_chunk in voice.synthesize(text):
         audio_chunks.append(audio_chunk.audio_int16_array) #Store all the the audio chunks into int16 audio array
+
+    # Guard: don't concatenate if synthesizer produced nothing
+    if not audio_chunks:
+        print("[Speaker]: Synthesizer returned no audio chunks.")
+        return
 
     audio_array = np.concatenate(audio_chunks) #String all the chunks together
     audio_float = audio_array.astype(np.float32) / 32768.0 #Conversion from int16 PCM top float32 for sounddevice to play it

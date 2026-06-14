@@ -7,7 +7,11 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #Imported variables from config.py
-from config import model, SAMPLE_RATE, DURATION, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD
+from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY
+
+#Groq import
+from groq import Groq
+groq_client = Groq(api_key=FAIRY_GROQ_API_KEY)
 
 def record_audio():
     audio_chunks = [] #initialize audio chunks array
@@ -37,8 +41,21 @@ def record_audio():
     return np.concatenate(audio_chunks, axis=0).flatten()
 
 def transcribe_audio(audio_array): #Passes the 1D Array Sample as input parameter
-    result  = model.transcribe(audio_array) #Pass in the actual recorded audio
-    return result["text"].strip().lower() #Split the entire sentence input into worded chunks
+    import io
+    import soundfile as sf
+
+    buffer = io.BytesIO()
+    sf.write(buffer, audio_array, SAMPLE_RATE, format='WAV')
+    buffer.seek(0) 
+
+    #create transcription via pre-loaded Groq model
+    transcription = groq_client.audio.transcriptions.create(
+        model="whisper-large-v3",  # More accuracy, but a little slower (should be fine though)
+        file=("audio.wav", buffer, "audio/wav"),
+        response_format="text"
+    )
+
+    return transcription.strip().lower()
 
 def is_valid_transcription(text):
     """Returns False if the transcription looks like noise or silence."""
@@ -61,8 +78,10 @@ def listen_for_wakeword():
         if not is_valid_transcription(text):
             continue
 
-        if any(wake_word in text for wake_word in WAKE_WORDS):
-            return True
+        for wake_word in WAKE_WORDS: #Checks for all the wakewords present in text
+            if wake_word in text: #If the wakeword is found...
+                snippet_remains = text.split(wake_word, 1)[-1].strip() #Extract the remaining text
+                return snippet_remains #Return the rest of the text
         
 def listen_for_request():
     print("Awaiting your request...")

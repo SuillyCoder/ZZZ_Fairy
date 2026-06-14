@@ -8,10 +8,15 @@ DURATION = 5 #Seconds to record per chunk
 CHANNELS = 1 #Mono Audio
 
 # A basic noise/silence filter
-NOISE_PATTERNS = ["1.5%", "thank you", "you", "uh", "um", ""]
+NOISE_PATTERNS = [
+    # Whisper silence hallucinations
+    "thank you", "thanks", "you're welcome", "thanks for watching",
+    "thank you for watching", "bye", "goodbye", "mary", "very",
+    ".", "..", "...", " ", "",
+]
 
 #==Wake Words==#
-WAKE_WORDS  = ["hey fairy", "fairy", "yo fairy", "hello fairy"]
+WAKE_WORDS  = ["hey fairy", "fairy", "yo fairy", "hello fairy", "ferry", "mary", "very", "faery", "faire"]
 
 # ===== Piper TTS Settings =====
 VOICE_MODEL_PATH = "voice_samples/en_US-libritts_r-medium.onnx"
@@ -20,10 +25,13 @@ VOICE_SAMPLE_RATE = 22050
 
 # ==== VAD Config Settings ====
 SILENCE_THRESHOLD = 0.01   # Volume level below this = silence (raise if too sensitive)
-SILENCE_DURATION = 1.5     # Seconds of silence before we assume you're done talking
+SILENCE_DURATION = 0.7     # Seconds of silence before we assume you're done talking
 CHUNK_SIZE = 512            # How many samples to read at a time (smaller = more responsive)
 
+# ===== Ollama Settings=====
+OLLAMA_URL = "http://localhost:11434/api/chat"
+MODEL_NAME  = "lfm2.5"  # Must match what you pulled in Ollama
 
-# ===== Ollama Settings (for Phase 3) =====
-OLLAMA_MODEL = "llama3.2"  # Update this to whatever model you pulled
-
+# ===== GROQ Settings=====
+FAIRY_GROQ_API_KEY = "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"
+GROQ_MODEL = "llama-3.1-8b-instant"  # Fast + free tier
