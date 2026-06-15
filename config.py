@@ -16,7 +16,7 @@ NOISE_PATTERNS = [
 ]
 
 #==Wake Words==#
-WAKE_WORDS  = ["hey fairy", "fairy", "yo fairy", "hello fairy", "ferry", "mary", "very", "faery", "faire"]
+WAKE_WORDS = ["hey fairy", "fairy", "yo fairy", "hello fairy", "ferry", "mary", "very", "faery", "faire"]
 
 # ===== Piper TTS Settings =====
 VOICE_MODEL_PATH = "voice_samples/en_US-libritts_r-medium.onnx"
@@ -35,3 +35,7 @@ MODEL_NAME  = "lfm2.5"  # Must match what you pulled in Ollama
 # ===== GROQ Settings=====
 FAIRY_GROQ_API_KEY = "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"
 GROQ_MODEL = "llama-3.1-8b-instant"  # Fast + free tier
+
+# ==== API Keys for data fetching
+OWM_API_KEY = '1686dac20769bf8aad0487fcd6e8970b'
+NEWS_API_KEY = '07de1b6f3cd94a7b96bfdb5c6361b785'
