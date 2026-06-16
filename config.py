@@ -1,5 +1,11 @@
 #Importing the model here instead
-import whisper
+from dotenv import load_dotenv
+import whisper, os
+
+#Load in API keys from env file
+load_dotenv()
+
+#Load in the model for STT
 model = whisper.load_model("base") #Base Model
 
 #==Configuring audio settings==#
@@ -34,3 +40,8 @@ MODEL_NAME  = "lfm2.5"  # Must match what you pulled in Ollama
 
 # ===== GROQ Settings=====
 GROQ_MODEL = "llama-3.1-8b-instant"  # Fast + free tier
+FAIRY_GROQ_API_KEY = os.getenv("FAIRY_GROQ_API_KEY")
+
+# ======= API Keys ======== #
+OWM_API_KEY = os.getenv("OWM_API_KEY")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")

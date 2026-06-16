@@ -27,10 +27,40 @@ speak("Greetings, Master Proxy! Fairy online. Awaiting your request.")
 
 def handle_intent(intent: str, fairy_request: str) -> str | None:
     if intent == "weather":
-        return get_weather()
+        result = get_weather()
+        speak(result)
+        speak("If you'd like, master, I can open up AccuWeather to provide you with this encastire week's forecast for Cebu City")
+        confirmation = listen_for_request()
+        if confirmation and any(word in confirmation.lower() for word in ["yes", "sure", "go ahead", "open", "yeah", "please"]):
+            import webbrowser
+            webbrowser.open("https://www.accuweather.com/en/ph/cebu-city/264885/weather-forecast/264885")
+            speak("Displaying week-long forecast for Cebu City. Please standby...")
+        else:
+            speak("Well, alright then. What else can I do for you, Master?")
+        return ""   # Return empty string so main.py skips the LLM but doesn't crash
  
     if intent == "news":
-        return get_news()
+        result = get_news()
+        if not result:
+            return "Master, I can't seem to retrieve any headlines."
+        speak(result)
+        speak("Want me to open a news page for the full story? I can pull up SunStar Cebu or Cebu Daily News.")
+        confirmation = listen_for_request()
+        if confirmation:
+            import webbrowser
+            text = confirmation.lower()
+            if "sunstar" in text or "sun star" in text:
+                webbrowser.open("https://www.sunstar.com.ph/cebu")
+                speak("Opening SunStar Cebu for you, Master")
+            elif "cdn" in text or "daily news" in text or "inquirer" in text:
+                webbrowser.open("https://cebudailynews.inquirer.net/")
+                speak("Opening Cebu Daily News for you, Master")
+            elif any(word in text for word in ["yes", "sure", "go ahead", "yeah", "open"]):
+                webbrowser.open("https://www.sunstar.com.ph/cebu")  # Default to SunStar
+                speak("Opening SunStar Cebu for you, Master")
+            else:
+                speak("Well, alright then. What else can I do for you, Master?")
+        return ""   # Same as above — skip LLM
  
     if intent == "reset":
         history.reset()
@@ -62,10 +92,10 @@ while True:
 
     #Intent-handling block
     direct_response = handle_intent(intent, fairy_request)
-    if direct_response: #Intent was handled without an LLM
-        speak(direct_response)
-
-        history.add_user(fairy_request) #Log the user's last message
+    if direct_response is not None #Intent was handled without an LLM. Catches both real responses and empty strings
+        if direct_response:
+            speak(direct_response)
+        history.add_user(fairy_request) #Log the user's last message         # Only speak if there's actually something to say
         history.add_assistant(direct_response) #Direct response
 
     else:

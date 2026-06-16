@@ -9,8 +9,18 @@ HEADLINE_COUNT = 3    # How many headlines to read aloud (keep it short for voic
 
 def get_news() -> str: 
     headlines = _fetch_from_newsapi()
+    if not headlines:
+        print("[News]: NewsAPI returned no results. Trying scrapers...")
+        headlines = _fetch_from_scraper()
 
+    if not headlines:
+        return ""
 
+    intro = f"Here are the top {len(headlines)} headlines from Cebu:"
+    items = " ... ".join([f"Headline {i+1}: {h}" for i, h in enumerate(headlines)])
+    spoken = f"{intro} {items}"
+    print(f"[News]: {spoken}")
+    return spoken
 
 #===== Helper Functions====#
 
