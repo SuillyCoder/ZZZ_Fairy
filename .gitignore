@@ -10,3 +10,7 @@ test.wav
 
 # VS Code settings (optional but recommended)
 .vscode/
+
+# Secret keys — NEVER commit this
+.env
+ 
