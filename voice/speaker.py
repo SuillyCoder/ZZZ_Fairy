@@ -1,16 +1,31 @@
-from piper.voice import PiperVoice #Importing the voice libraries
-import wave
+from kokoro_onnx import Kokoro
 import sounddevice as sd
 import numpy as np
+from scipy import signal
 
 #Adding the root to the search path when importing from other files
-import sys
-import os
+import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import VOICE_CONFIG_PATH, VOICE_MODEL_PATH, SAMPLE_RATE
+from config import VOICE_MODEL_PATH, VOICE_PACK_PATH, VOICE_VARIANT
+
+# == Set values for voice rippling
+ripple_rate = 50
+ripple_depth = 0.3
 
 #Load in the chosen voice
-voice = PiperVoice.load(VOICE_MODEL_PATH, config_path=VOICE_CONFIG_PATH,)
+kokoro = Kokoro(VOICE_MODEL_PATH, VOICE_PACK_PATH)
+
+#Ripply effect for voice sample
+def apply_robot_ripple(audio: np.ndarray, sample_rate: int, ripple_rate, ripple_depth) -> np.ndarray:
+    t = np.arange(len(audio)) / sample_rate
+    modulator = 1 - ripple_depth + ripple_depth * np.sin(2 * np.pi * ripple_rate * t) #Simple sine oscillator
+    rippled = audio * modulator #Forced rippled response on the audio
+    
+    max_val = np.max(np.abs(rippled))
+    if max_val > 0:
+        rippled = rippled / max_val * np.max(np.abs(audio))
+
+    return rippled.astype(np.float32) #Return the rippled audio as a float32 data type (since that's what Kokoro accepts)
 
 #Function for Fairy to speak
 def speak(text :str):
@@ -21,21 +36,20 @@ def speak(text :str):
         print("[Speaker]: Nothing to say — empty response received.")
         return
     
-    audio_chunks = [] #All the audio broken down into textual chunks
+    samples, sample_rate = kokoro.create(
+        text,
+        voice = VOICE_VARIANT,
+        speed = 1.0,
+        lang = "en-us"
+    )
 
-    #synthesize() function yields audio chunks and processes them as text
-    for audio_chunk in voice.synthesize(text):
-        audio_chunks.append(audio_chunk.audio_int16_array) #Store all the the audio chunks into int16 audio array
-
-    # Guard: don't concatenate if synthesizer produced nothing
-    if not audio_chunks:
-        print("[Speaker]: Synthesizer returned no audio chunks.")
+    if samples is None or len(samples) == 0: #Empty sample generation
+        print("[Speaker]: Kokoro returned no audio.")
         return
 
-    audio_array = np.concatenate(audio_chunks) #String all the chunks together
-    audio_float = audio_array.astype(np.float32) / 32768.0 #Conversion from int16 PCM top float32 for sounddevice to play it
- 
-    sd.play(audio_float, samplerate=voice.config.sample_rate) #Play the audio based on the given sample rate
+    rippled_audio = apply_robot_ripple(samples, sample_rate, ripple_rate, ripple_depth)
+    
+    sd.play(rippled_audio, samplerate=sample_rate) #Play the audio based on the given sample rate
     sd.wait() #Wait for it to finish
 
 

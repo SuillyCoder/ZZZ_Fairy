@@ -1,19 +1,27 @@
 import sounddevice as sd #Importing sounddevice for mic access
 import numpy as np #Importing numpy for necessary mathematical operations (or smth)
 import time #for controlling delays in audio capture
-import io, re
+import io, re, json
 import soundfile as sf
+from vosk import Model, KaldiRecognizer
+from queue import Queue
 
 #Adding the root to the search path when importing from other files
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #Imported variables from config.py
-from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY
+from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, model
 
-#Groq import
+#Model imports
 from groq import Groq
-groq_client = Groq(api_key=FAIRY_GROQ_API_KEY)
+if not FAIRY_GROQ_API_KEY:
+    raise ValueError(
+        "FAIRY_GROQ_API_KEY is missing or None. Check your .env file has "
+        "a line like: FAIRY_GROQ_API_KEY=your_key_here (no quotes, no spaces around =)"
+    )
+groq_client = Groq(api_key=FAIRY_GROQ_API_KEY) #Groq model loading
+vosk_model = Model(VOSK_MODEL_PATH) #Vosk model loading
 
 def record_audio():
 
@@ -80,7 +88,7 @@ def transcribe_audio(audio_array): #Passes the 1D Array Sample as input paramete
     try:
         #create transcription via pre-loaded Groq model
         transcription = groq_client.audio.transcriptions.create(
-            model="whisper-large-v3",  # More accuracy, but a little slower (should be fine though)
+            model= "whisper-large-v3",  # More accuracy, but a little slower (should be fine though)
             file=("audio.wav", buffer, "audio/wav"), #Save ass WAV file
             response_format="text",
             language = "en",
@@ -107,23 +115,27 @@ def is_valid_transcription(text):
     return True
 
 def listen_for_wakeword():
-    time.sleep(1)
-    while True:
-        #Passing recorded audio and transcribed audio as variables
-        audio = record_audio() 
-        text = transcribe_audio(audio)
+    recognizer = KaldiRecognizer(vosk_model, SAMPLE_RATE)
+    recognizer.SetWords(True)
+    q = Queue()
 
-        if not text: #If nothing was heard
-            continue
+    def callback(indata, frames, time_info, status):
+        audio_bytes = (indata * 32767).astype(np.int16).tobytes() #Convert the audio into int16 from float32 via typecasting
+        if recognizer.AcceptWaveform(audio_bytes): #If the waveform is acceptable 
+            result = json.loads(recognizer.Result()) #Load the result as parsed json
+            text = result.get("text", "").strip().lower() #pass those results as the full stream of text
+            if text:
+                q.put(text) #Add the stream of text into the queue
 
-        print(f"Heard: {text}")  # <-- add this so you can see what's being transcribed
-        if not is_valid_transcription(text):
-            continue
+    with sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS,dtype='float32', blocksize=CHUNK_SIZE, callback=callback):
+        while True:
+            text = q.get(block=True, timeout=None)  # Blocks until Vosk produces a finalized phrase
+            print(f"[Fairy heard]: {text}")
 
-        for wake_word in WAKE_WORDS: #Checks for all the wakewords present in text
-            if wake_word in text: #If the wakeword is found...
-                snippet_remains = text.split(wake_word, 1)[-1].strip() #Extract the remaining text
-                return snippet_remains #Return the rest of the text
+            for wake_word in WAKE_WORDS:
+                if wake_word in text:
+                    snippet_remains = text.split(wake_word, 1)[-1].strip()
+                    return snippet_remains
         
 def listen_for_request():
     print("Awaiting your request...")
