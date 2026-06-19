@@ -6,6 +6,13 @@ import whisper, os
 load_dotenv()
 
 #Load in the model for STT
+from dotenv import load_dotenv
+import whisper, os
+
+#Load in API keys from env file
+load_dotenv()
+
+#Load in the model for STT
 model = whisper.load_model("base") #Base Model
 
 #Load in the project root 
@@ -58,3 +65,7 @@ GMAIL_TOKEN_PATH= os.path.join(PROJECT_ROOT,'token.json')
 GMAIL_CREDENTIALS_PATH =  os.path.join(PROJECT_ROOT,'credentials.json')
 SHEETS_TOKEN_PATH  =  os.path.join(PROJECT_ROOT,"token_sheets.json")
 EXPENSE_SHEET_ID   = os.getenv("EXPENSE_SHEET_ID")
+
+# ======= API Keys ======== #
+OWM_API_KEY = os.getenv("OWM_API_KEY")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
