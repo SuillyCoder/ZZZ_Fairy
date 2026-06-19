@@ -14,3 +14,5 @@ test.wav
 # Secret keys — NEVER commit this
 .env
  
+# Credentials.json file for Google Auth
+credentials.json
