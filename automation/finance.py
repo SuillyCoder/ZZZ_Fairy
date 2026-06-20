@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 
 #Matplotlib imports
-matplotlib.use("Agg")
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
  
@@ -15,6 +15,10 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 import gspread
+
+#Importing speaker function
+from voice.speaker import speak
+from brain.responses import get_confirmation_ack
  
 # ── Groq (brain: persona, interpretation, spoken recommendations) ──
 from groq import Groq
@@ -29,12 +33,64 @@ os.makedirs(PLOTS_DIR, exist_ok=True)
  
 # ── Calendar month names — used to tell monthly tabs from trip tabs ──
 MONTH_NAMES = [
-    "january", "february", "march", "april", "may", "june",
-    "july", "august", "september", "october", "november", "december"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
 ]
- 
-# ==== Authentication ===== #
 
+# === Header detection ===# 
+def find_header_row(all_values: list[list[str]]) -> int:
+    for i, row in enumerate(all_values[:15]):
+        normalized = [str(cell).strip().upper() for cell in row]
+        if "DATE" in normalized and "AMOUNT" in normalized:
+            return i
+    return -1
+
+def _trim_trailing_blanks(row: list[str]) -> int:
+    normalized = [str(cell).strip().upper() for cell in row]
+    if "AMOUNT" in normalized:
+        return normalized.index("AMOUNT")
+    last_index = -1
+    for i, cell in enumerate(row):
+        if str(cell).strip() != "":
+            last_index = i
+    return last_index
+
+# === Peso to Yen Conversion heper functions for Japan Trip Tabs ===#
+def detect_exchange_rate(all_values: list[list[str]]) -> float | None:
+    peso_value = None
+    foreign_value = None
+
+    for i, row in enumerate(all_values[:15]):
+        for j, cell in enumerate(row):
+            label = str(cell).strip().upper()
+ 
+            if "PESO" in label and "BUDGET" in label:
+                # The actual number usually sits one row below the label
+                if i + 1 < len(all_values) and j < len(all_values[i + 1]):
+                    raw = all_values[i + 1][j]
+                    peso_value = parse_currency_number(raw)
+ 
+            elif "BUDGET" in label and "PESO" not in label and "CASH" not in label:
+                # Catches "YEN-CONVERTED BUDGET" or similar future labels
+                if i + 1 < len(all_values) and j < len(all_values[i + 1]):
+                    raw = all_values[i + 1][j]
+                    foreign_value = parse_currency_number(raw)
+ 
+    if peso_value and foreign_value and foreign_value != 0:
+        return peso_value / foreign_value
+ 
+    return None
+
+def parse_currency_number(raw: str) -> float | None:
+    if not raw:
+        return None
+    cleaned = re.sub(r"[^\d.]", "", str(raw))
+    try:
+        return float(cleaned) if cleaned else None
+    except ValueError:
+        return None
+ 
+# ====== Authentication ======= #
 def get_sheets_client() -> gspread.Client:
     creds = None #Set the credenmtials to an empty value
  
@@ -53,7 +109,7 @@ def get_sheets_client() -> gspread.Client:
             flow = InstalledAppFlow.from_client_secrets_file(
                 GMAIL_CREDENTIALS_PATH, SHEETS_SCOPES
             )
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_local_server(port=8080) # Port 8080 (Dedicated port for the Finance)
  
         with open(SHEETS_TOKEN_PATH, "w") as f:
             f.write(creds.to_json())
@@ -72,15 +128,30 @@ def load_all_sheets() -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]
         print(f"[Finance]: Reading tab '{tab_name}'...")
  
         try:
-            records = worksheet.get_all_records()
+            all_values = worksheet.get_all_values()
  
-            if not records:
+            if not all_values:
                 print(f"[Finance]: Tab '{tab_name}' is empty — skipping.")
                 continue
  
-            df = pd.DataFrame(records)
+            header_row_index = find_header_row(all_values)
+            if header_row_index == -1:
+                print(f"[Finance]: Tab '{tab_name}' has no recognizable header row — skipping.")
+                continue
+            raw_header_row = all_values[header_row_index]
+            last_col = _trim_trailing_blanks(raw_header_row)
+            expected_headers = [str(c).strip() for c in raw_header_row[:last_col + 1]]
+
+            records = worksheet.get_all_records(
+                head=header_row_index + 1,
+                expected_headers=expected_headers,
+            )
  
-            # Normalize column names: strip whitespace + uppercase
+            if not records:
+                print(f"[Finance]: Tab '{tab_name}' has headers but no data rows — skipping.")
+                continue
+ 
+            df = pd.DataFrame(records)
             df.columns = [c.strip().upper() for c in df.columns]
  
             # Minimum viable columns check
@@ -89,8 +160,6 @@ def load_all_sheets() -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]
                 continue
  
             # ── Clean AMOUNT ──
-            # gspread sometimes returns amounts as strings (e.g. "₱84.00").
-            # Strip all non-numeric characters, then cast to float.
             df["AMOUNT"] = (
                 df["AMOUNT"]
                 .astype(str)
@@ -98,6 +167,14 @@ def load_all_sheets() -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]
                 .replace("", "0")
                 .astype(float)
             )
+
+            #Currency conversion for the Japan trip code only
+            is_monthly = tab_name in MONTH_NAMES
+            if not is_monthly:
+                rate = detect_exchange_rate(all_values)
+                if rate:
+                    print(f"[Finance]: Tab '{tab_name}' — converting at rate {rate:.4f} PHP per unit.")
+                    df["AMOUNT"] = df["AMOUNT"] * rate
  
             # Drop template rows (rows where Amount is 0 or blank)
             df = df[df["AMOUNT"] > 0].copy()
@@ -109,7 +186,7 @@ def load_all_sheets() -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame]]
             df = df.dropna(subset=["DATE"])
  
             # Classify tab
-            if tab_name.lower() in MONTH_NAMES:
+            if is_monthly:
                 monthly_tabs[tab_name] = df
             else:
                 trip_tabs[tab_name] = df
@@ -206,7 +283,7 @@ def groq_recommendations (monthly_tabs: dict[str, pd.DataFrame]) -> str:
         return "I couldn't generate recommendations right now, Master."
     
 # ===== LMF2.5 DIRTY MATHEMATICAL WORK ======== #
-
+ 
 def lfm25_heavy_analysis(monthly_tabs: dict[str, pd.DataFrame], voice_query: str) -> str:
     if not monthly_tabs:
         return "No data available for analysis, Master."
@@ -263,7 +340,7 @@ def lfm25_heavy_analysis(monthly_tabs: dict[str, pd.DataFrame], voice_query: str
         return "Something went wrong with the local analysis engine, Master."
     
 # ====== PANDAS ANALYSIS FUCNTIONS ====== #
-
+ 
 def summarize_month(tab_name: str, df: pd.DataFrame) -> str:
     """Voice-friendly summary of a single month's spending."""
     total = df["AMOUNT"].sum()
@@ -303,7 +380,7 @@ def all_time_summary(monthly_tabs: dict[str, pd.DataFrame]) -> str:
         f"Lowest: {lowest} at {month_totals[lowest]:.0f} pesos."
     )
  
-
+ 
 def category_summary(
     monthly_tabs: dict[str, pd.DataFrame], specific_month: str = None
 ) -> str:
@@ -353,12 +430,37 @@ def trip_summary(trip_tabs: dict[str, pd.DataFrame], query: str) -> str:
         f"{cat_part}"
     )
  
-def open_plot(filepath :str):
-    try: 
-        os.startfile(filepath)
+def save_and_show_plot(fig, filename: str):
+    """
+    Saves the figure as a PNG to PLOTS_DIR AND displays it in a native
+    matplotlib popup window (via plt.show()).
+ 
+    ORDER MATTERS HERE:
+    1. Save to disk FIRST — savefig() doesn't require the window to be open.
+    2. Show the window with plt.show() — this BLOCKS execution until the
+       person closes the window. That's expected/standard matplotlib
+       behavior; FAIRY's voice loop resumes once you close the chart.
+    3. Close the figure afterward to free memory — closing before showing
+       would destroy the figure before it ever renders.
+    """
+    path = os.path.join(PLOTS_DIR, filename)
+    fig.savefig(path, dpi=150)
+    print(f"[Finance]: Plot saved to {path}")
+ 
+    try:
+        plt.show()   # Opens the native interactive window; blocks until closed
     except Exception as e:
-        print(f"[Finance]: Could not auto-open plot: {e}")
-
+        print(f"[Finance]: Could not open native plot window: {e}")
+        # Fallback: at least open the saved PNG with the OS default viewer
+        try:
+            os.startfile(path)
+        except Exception as e2:
+            print(f"[Finance]: Could not auto-open saved plot either: {e2}")
+    finally:
+        plt.close(fig)
+ 
+    return path
+ 
 def plot_monthly_totals(monthly_tabs: dict[str, pd.DataFrame]) -> str:
     if not monthly_tabs:
         return "No monthly data to plot, Master."
@@ -394,13 +496,10 @@ def plot_monthly_totals(monthly_tabs: dict[str, pd.DataFrame]) -> str:
     ax.set_facecolor("#f5f5f5")
     fig.tight_layout()
  
-    path = os.path.join(PLOTS_DIR, "monthly_totals.png")
-    fig.savefig(path, dpi=150)
-    plt.close(fig)
-    open_plot(path)
+    save_and_show_plot(fig, "monthly_totals.png")
     return "Monthly totals bar chart is up, Master."
-
-
+ 
+ 
 def plot_category_breakdown(monthly_tabs: dict[str, pd.DataFrame], specific_month: str = None) -> str:
     if specific_month and specific_month in monthly_tabs:
         df = monthly_tabs[specific_month]
@@ -438,10 +537,7 @@ def plot_category_breakdown(monthly_tabs: dict[str, pd.DataFrame], specific_mont
     ax.set_title(title, fontsize=13, fontweight="bold", pad=20)
     fig.tight_layout()
  
-    path = os.path.join(PLOTS_DIR, "category_breakdown.png")
-    fig.savefig(path, dpi=150)
-    plt.close(fig)
-    open_plot(path)
+    save_and_show_plot(fig, "category_breakdown.png")
     return "Category breakdown chart is up, Master."
  
 def plot_spending_timeline(monthly_tabs: dict[str, pd.DataFrame]) -> str:
@@ -472,10 +568,7 @@ def plot_spending_timeline(monthly_tabs: dict[str, pd.DataFrame]) -> str:
     fig.autofmt_xdate(rotation=30)
     fig.tight_layout()
  
-    path = os.path.join(PLOTS_DIR, "spending_timeline.png")
-    fig.savefig(path, dpi=150)
-    plt.close(fig)
-    open_plot(path)
+    save_and_show_plot(fig, "spending_timeline.png")
     return "All-time spending timeline is up, Master."
  
 def handle_finance(voice_query: str) -> str:

@@ -6,8 +6,8 @@ import random
 GREETING_ACKS =  [
     "Greetings, Master Proxy. Fairy online. Awaiting your request", 
     "Systems starting up. Fairy online. Welcome back, Master.",
-    "Systems activating. Fairy online. What can I do for you, Master."
-    "Successfully activated. Fairy at your service, Master."
+    "Systems activating. Fairy online. What can I do for you, Master.",
+    "Successfully activated. Fairy at your service, Master.",
     "Good day, Master. How can I assist you today?"
 ]
 

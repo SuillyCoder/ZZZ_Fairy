@@ -32,9 +32,10 @@ speak(get_greet_ack())
 confirm_triggers = ["yes", "sure", "go ahead", "open", "yeah", "please", "yes please", "please do"]
 
 # TEMP — INPUT MODE TOGGLE (remove before MVP finalization)
+speak("Please confirm if you would like to communicate via terminal or voice input")
 print("\n=== FAIRY INPUT MODE ===")
-print("1. Voice input (default)")
-print("2. Text input (for quiet/focused environments)")
+print("1. Voice input")
+print("2. Terminal input")
 mode_choice = input("Select mode [1/2]: ").strip()
 
 USE_TEXT_INPUT = (mode_choice == "2")
@@ -177,8 +178,9 @@ while True:
                 followup_intent = classify_intent(followup, session_state) #classify the intent of the follow up (if there is any)
                 followup_direct = handle_intent(followup_intent, followup) #Handle the intent of the followup directly
         
-                if followup_direct:
-                    speak(followup_direct)
+                if followup_direct is not None:
+                    if followup_direct:
+                        speak(followup_direct)
                     history.add_user(followup)
                     history.add_assistant(followup_direct)
                 else:

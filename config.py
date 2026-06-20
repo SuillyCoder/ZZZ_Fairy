@@ -32,7 +32,7 @@ NOISE_PATTERNS = [
 ]
 
 #==Wake Words==#
-WAKE_WORDS = ["hey fairy", "fairy", "yo fairy", "hello fairy", "ferry", "mary", "very", "faery", "faire"]
+WAKE_WORDS = ["hey fairy", "fairy", "yo fairy", "hello fairy", "ferry", "mary", "very", "faery", "faire", "harry", "fary"]
 
 # ===== Piper TTS Settings =====
 VOICE_MODEL_PATH = "voice_samples/kokoro-v1.0.onnx"

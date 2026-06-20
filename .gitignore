@@ -16,3 +16,5 @@ test.wav
  
 # Credentials.json file for Google Auth
 credentials.json
+token.json
+token_sheets.json

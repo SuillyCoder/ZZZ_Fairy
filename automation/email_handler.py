@@ -28,7 +28,7 @@ def _get_gmail_service():
                     "Please download credentials.json from Google Cloud Console."
                 )
             flow = InstalledAppFlow.from_client_secrets_file(GMAIL_CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)  # Opens browser, handles callback
+            creds = flow.run_local_server(port=8081)  # Port 8081 (Dedicated port for the Email)
  
         # Save the token for next time
         with open(GMAIL_TOKEN_PATH, "w") as token_file:
