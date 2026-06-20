@@ -23,6 +23,12 @@ from api.news import get_news
 #Gmail
 from automation.email_handler import get_unread_emails, mark_all_fetched_as_read
 from automation.finance import handle_finance
+from automation.code_assistant import (
+    review_code, generate_commented_version, apply_commented_version,
+    discard_commented_version, generate_commit_message, confirm_commit,
+    diagnose_error, suggest_refactor,
+)
+import re as _re_path_extract
 
 # Boot up message
 history = ConversationHistory(FAIRY_SYSTEM_PROMPT)
@@ -51,6 +57,28 @@ def get_user_input(is_wakeword_check=False):
         return text  # Treated as if it were the "inline command" remainder
     else:
         return input("[You]: ").strip()
+    
+def extract_path(text: str) -> str | None:
+    # Quoted path takes priority if present
+    quoted = _re_path_extract.search(r'["\']([^"\']+)["\']', text)
+    if quoted:
+        return quoted.group(1).strip()
+ 
+    # Windows-style path: C:/... or C:\...
+    win_path = _re_path_extract.search(r'[A-Za-z]:[\\/][^\s]+', text)
+    if win_path:
+        return win_path.group(0).strip().rstrip(".,?!")
+ 
+    # Bare relative path with a slash or a file extension
+    bare_path = _re_path_extract.search(r'\S+\.(py|js|ts|java|cpp|c|cs|go|rb|php|html|css)\b', text)
+    if bare_path:
+        return bare_path.group(0).strip().rstrip(".,?!")
+ 
+    return None
+
+pending_comment_preview = {"filepath": None, "temp_path": None}
+pending_commit = {"repo_path": None, "message": None}
+ 
     
 
 #Intent (Use Case) handling
@@ -116,6 +144,76 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         result = handle_finance(fairy_request)
         speak(result)
         return ""
+    
+
+    if intent == "code":
+        text = fairy_request.lower()
+        path = extract_path(fairy_request)
+ 
+        # ── Sub-routing: figure out WHICH code action is being requested ──
+        if "comment" in text:
+            if not path:
+                return "Which file should I comment, Master? Please give me the path."
+            speak("Let me look that over, Master. This might take a moment.")
+            summary, temp_path = generate_commented_version(path)
+            speak(summary)
+            if temp_path:
+                confirmation = get_user_input()
+                if confirmation and any(w in confirmation.lower() for w in confirm_triggers):
+                    speak(get_confirmation_ack())
+                    result = apply_commented_version(path, temp_path)
+                    speak(result)
+                else:
+                    speak(get_decline_ack())
+                    result = discard_commented_version(temp_path)
+                    speak(result)
+            return ""
+ 
+        if "commit" in text:
+            # Path here is treated as the REPO folder, not a single file
+            repo_path = path if path else fairy_request.split("at")[-1].strip() if "at" in text else None
+            if not repo_path:
+                return "Which repo should I generate a commit message for, Master? Please give me the path."
+            speak("Reading the diff, Master, one moment.")
+            summary, draft_message = generate_commit_message(repo_path)
+            speak(summary)
+            if draft_message:
+                confirmation = get_user_input()
+                if confirmation and any(w in confirmation.lower() for w in confirm_triggers):
+                    speak(get_confirmation_ack())
+                    result = confirm_commit(repo_path, draft_message)
+                    speak(result)
+                else:
+                    speak(get_decline_ack())
+                    speak("Alright, I won't commit anything, Master.")
+            return ""
+ 
+        if any(w in text for w in ["diagnose", "debug", "fix this error", "error"]):
+            if not path:
+                return "Which file is this error coming from, Master? Please give me the path."
+            # Everything after the path mention is treated as the error message itself
+            error_message = fairy_request
+            speak("Let me take a look, Master.")
+            result = diagnose_error(path, error_message)
+            speak(result)
+            return ""
+ 
+        if "refactor" in text or "too long" in text:
+            if not path:
+                return "Which file should I check, Master? Please give me the path."
+            speak("Checking the structure, Master, one moment.")
+            result = suggest_refactor(path)
+            speak(result)
+            return ""
+ 
+        # Default: code review
+        if not path:
+            return "Which file should I review, Master? Please give me the path."
+        speak("Reviewing now, Master. One moment.")
+        result = review_code(path)
+        speak(result)
+        return ""
+ 
     
     if intent == "reset":
         history.reset()
