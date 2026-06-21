@@ -23,6 +23,7 @@ from api.news import get_news
 #Gmail
 from automation.email_handler import get_unread_emails, mark_all_fetched_as_read
 from automation.finance import handle_finance
+from automation.discord_handler import get_recent_discord_messages
 from automation.code_assistant import (
     review_code, generate_commented_version, apply_commented_version,
     discard_commented_version, generate_commit_message, confirm_commit,
@@ -145,6 +146,10 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         speak(result)
         return ""
     
+    if intent == "discord":
+        result = get_recent_discord_messages()
+        speak(result)
+        return""
 
     if intent == "code":
         text = fairy_request.lower()

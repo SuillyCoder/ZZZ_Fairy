@@ -12,6 +12,11 @@ INTENT_KEYWORDS = {
     "email":   ["email", "emails", "mail", "inbox", "unread", "check my email", "any mail", "any emails", "do i have mail", "mark as read"],
     "finance": ["expense", "expenses", "spending", "spendings", "spent", "money", "budget", "finance", "financial", "tracker", "how much did i", "how much have i", "monthly", "category breakdown", "plot my", "chart my", "recommend", "trip spending", "japan trip", "summary report", "graph", "plot", "chart", "visualize", "visualise", "compare my", "comparison of my", "timeline", "superimposed", "breakdown"],
     "code":    ["review my code", "review the code", "review this file", "code review", "comment my code", "comment this file", "add comments", "auto comment", "commit message", "generate a commit", "git commit", "diagnose this error", "debug this", "fix this error", "refactor", "is this too long", "review the file at", "comment the file at"],
+    "discord": ["discord", "server messages", "group chat", "group chats", "check discord", "discord messages", "any messages", "new messages", "check messages", "weirdos", "abode", "the abode", "weirdo's abode", "the weirdo's abode"],
+    "reset":   ["forget everything", "clear history", "start over", "reset"],
+    "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters"],
+    "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk"],
+    "chat":    [],  # Default fallback — no keywords needed
     "reset":   ["forget everything", "clear history", "start over", "reset"],
     "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters"],
     "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk"],

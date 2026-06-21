@@ -69,3 +69,8 @@ EXPENSE_SHEET_ID   = os.getenv("EXPENSE_SHEET_ID")
 # ======= API Keys ======== #
 OWM_API_KEY = os.getenv("OWM_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+
+# ======== Discord APIs =========== #
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+RAW_SERVER_ID = os.getenv("DISCORD_SERVER_ID")
+DISCORD_SERVER_ID = int(RAW_SERVER_ID) if RAW_SERVER_ID.isdigit() else None #Typecasting from string to integer
