@@ -48,6 +48,10 @@ SILENCE_THRESHOLD = 0.01   # Volume level below this = silence (raise if too sen
 SILENCE_DURATION = 0.7     # Seconds of silence before we assume you're done talking
 CHUNK_SIZE = 512            # How many samples to read at a time (smaller = more responsive)
 
+#===== Audio DSP Filter Parameters ======
+MIC_GAIN = 3.0           # Amplification multiplier — start at 3.0, tune from there
+HIGHPASS_CUTOFF = 100    # Hz — removes rumble/hum below typical speech range
+
 # ===== Ollama Settings=====
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME  = "lfm2.5"  # Must match what you pulled in Ollama

@@ -112,7 +112,7 @@ def preview_cache_clear() -> tuple[str, str]:
 def clear_cache(temp_dir: str) -> str:
     cleared = skipped = freed_bytes = 0 #Variables for indicating cleaned status
 
-    for entry in os.listdr(temp_dir):
+    for entry in os.listdir(temp_dir):
         full_path = os.path = os.path.join(temp_dir, entry) #Extracting full path for cache file to be cleared
         try: 
             if os.path.isfile(full_path) or os.path.isLink(full_path):

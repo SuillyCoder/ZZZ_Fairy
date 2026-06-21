@@ -11,7 +11,9 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #Imported variables from config.py
-from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, model
+from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, model, HIGHPASS_CUTOFF, MIC_GAIN
+#DSP filter function imports
+from scipy.signal import butter, lfilter
 
 #Model imports
 from groq import Groq
@@ -22,6 +24,21 @@ if not FAIRY_GROQ_API_KEY:
     )
 groq_client = Groq(api_key=FAIRY_GROQ_API_KEY) #Groq model loading
 vosk_model = Model(VOSK_MODEL_PATH) #Vosk model loading
+
+def audio_filter(audio_chunk, gain=MIC_GAIN, cutoff=HIGHPASS_CUTOFF, sample_rate=SAMPLE_RATE):
+    amplified = audio_chunk * gain #Amplifier Block: Vout = Vin * Av
+
+    #High Pass Butterworth Filter (raw amplified audio is in; noise is thrown off)
+    nyquist = sample_rate / 2
+    normalized_cutoff = cutoff / nyquist
+    b, a = butter(N=2, Wn=normalized_cutoff, btype='high')
+    filtered = lfilter(b,a, amplified)
+
+    #Safety clamp: prevent clipping above [-1, 1] after amplification ---
+    filtered = np.clip(filtered, -1.0, 1.0)
+
+    return filtered.astype(np.float32) #Filtered audiop gets returned as float32 data type format
+
 
 def record_audio():
 
@@ -44,8 +61,9 @@ def record_audio():
         if recording_done:
             return #Dont process the audio until we've stopped
         chunk = indata.copy() #Set the chunk equal to data input (voice)
+        chunk = audio_filter(chunk.flatten()).reshape(-1, 1) #Apply DSP filter
         audio_chunks.append(chunk) #add that chunk to the audio_chunk array
-        volume = np.sqrt(np.mean(chunk **2)) #How loud is the chunk?
+        volume = np.sqrt(np.mean(chunk **2)) #How loud is the chunk? (Measured after amplification)
 
         if volume < SILENCE_THRESHOLD:
             silent_chunks += 1
@@ -120,7 +138,8 @@ def listen_for_wakeword():
     q = Queue()
 
     def callback(indata, frames, time_info, status):
-        audio_bytes = (indata * 32767).astype(np.int16).tobytes() #Convert the audio into int16 from float32 via typecasting
+        chunk = audio_filter(indata.flatten()).reshape(-1, 1)
+        audio_bytes = (chunk * 32767).astype(np.int16).tobytes() #Convert the audio into int16 from float32 via typecasting
         if recognizer.AcceptWaveform(audio_bytes): #If the waveform is acceptable 
             result = json.loads(recognizer.Result()) #Load the result as parsed json
             text = result.get("text", "").strip().lower() #pass those results as the full stream of text
