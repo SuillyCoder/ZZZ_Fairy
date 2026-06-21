@@ -2,7 +2,7 @@
 # where all the use cases will be implemented and called
 #This will gradually be expanded as more use cases will be implemented
 
-#Ollama Imports
+#===== Ollama Imports ===== #
 from brain.ollama_client import chat
 from brain.conversation import ConversationHistory
 from brain.fairy_persona import FAIRY_SYSTEM_PROMPT
@@ -12,28 +12,32 @@ from brain.responses import get_greet_ack, get_wake_ack, get_empty_ack, get_conf
 
 # ============= USE CASE IMPORT CALLS ============ #
 
-#Voice:
+#==== Voice: ====#
 from voice.listener import listen_for_wakeword, listen_for_request
 from voice.speaker import speak
 
-#API:
+#==== API: ====#
 from api.weather import get_weather
 from api.news import get_news
 
-#Gmail
+#==== Automation: ====#
 from automation.email_handler import get_unread_emails, mark_all_fetched_as_read
 from automation.finance import handle_finance
 from automation.discord_handler import get_recent_discord_messages
-from automation.code_assistant import (
-    review_code, generate_commented_version, apply_commented_version,
-    discard_commented_version, generate_commit_message, confirm_commit,
-    diagnose_error, suggest_refactor,
-)
+from automation.code_assistant import (review_code, generate_commented_version, apply_commented_version, discard_commented_version, generate_commit_message, confirm_commit, diagnose_error, suggest_refactor)
+
+#==== Hardware and Device: ====#
+from device.system_info import (get_system_performance, check_battery_threshold, start_battery_monitor, preview_cache_clear, clear_cache, open_task_manager_performance)
+from device.performance_plot import plot_performance_metrics
+from device.security_audit import run_security_audit
+
+# Extraction handler
 import re as _re_path_extract
 
 # Boot up message
 history = ConversationHistory(FAIRY_SYSTEM_PROMPT)
 session_state = SessionState()
+start_battery_monitor(speak, poll_interval=60)
 
 speak(get_greet_ack())
 confirm_triggers = ["yes", "sure", "go ahead", "open", "yeah", "please", "yes please", "please do"]
@@ -219,6 +223,49 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         speak(result)
         return ""
  
+    if intent == "system":
+        text = fairy_request.lower()
+ 
+        # ── Sub-routing: figure out WHICH hardware action is being requested ──
+        if "task manager" in text or "performance tab" in text:
+            result = open_task_manager_performance()
+            speak(result)
+            return ""
+ 
+        if any(w in text for w in ["security", "vulnerability", "secure"]):
+            speak("Running a quick security check, Master. One moment.")
+            result = run_security_audit()
+            speak(result)
+            return ""
+ 
+        if "clear" in text and ("cache" in text or "temp" in text):
+            summary, temp_dir = preview_cache_clear()
+            speak(summary)
+            if "already clean" in summary.lower():
+                return ""
+            confirmation = get_user_input()
+            if confirmation and any(w in confirmation.lower() for w in confirm_triggers):
+                speak(get_confirmation_ack())
+                result = clear_cache(temp_dir)
+                speak(result)
+            else:
+                speak(get_decline_ack())
+                speak("Leaving your temp cache as is, Master.")
+            return ""
+ 
+        if ("plot" in text or "graph" in text or "chart" in text) and ("performance" in text or "network" in text):
+            speak("Sampling system performance over the next few seconds, Master. Please hold.")
+            summary, _ = plot_performance_metrics()
+            speak(summary)
+            return ""
+ 
+        # Default: spoken performance summary + battery threshold nag if applicable
+        result = get_system_performance()
+        speak(result)
+        battery_warning = check_battery_threshold()
+        if battery_warning:
+            speak(battery_warning)
+        return ""
     
     if intent == "reset":
         history.reset()

@@ -15,11 +15,7 @@ INTENT_KEYWORDS = {
     "discord": ["discord", "server messages", "group chat", "group chats", "check discord", "discord messages", "any messages", "new messages", "check messages", "weirdos", "abode", "the abode", "weirdo's abode", "the weirdo's abode"],
     "reset":   ["forget everything", "clear history", "start over", "reset"],
     "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters"],
-    "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk"],
-    "chat":    [],  # Default fallback — no keywords needed
-    "reset":   ["forget everything", "clear history", "start over", "reset"],
-    "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters"],
-    "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk"],
+    "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk", "system status", "clear cache", "clear temp", "clear my cache", "free up space", "temp files", "task manager", "open task manager", "performance tab", "security check", "vulnerability", "security audit", "am i secure", "is my pc secure", "plot my performance", "plot performance", "graph my performance", "performance chart", "network usage", "chart my performance"],
     "chat":    [],  # Default fallback — no keywords needed
 }
 

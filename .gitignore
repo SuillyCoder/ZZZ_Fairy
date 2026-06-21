@@ -14,6 +14,10 @@ test.wav
 # Secret keys — NEVER commit this
 .env
  
+# Folders only meant for me
+plots/
+test_fixtures/
+
 # Credentials.json file for Google Auth
 credentials.json
 token.json
