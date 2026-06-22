@@ -78,3 +78,8 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 RAW_SERVER_ID = os.getenv("DISCORD_SERVER_ID")
 DISCORD_SERVER_ID = int(RAW_SERVER_ID) if RAW_SERVER_ID.isdigit() else None #Typecasting from string to integer
+
+# ======== Hoyoverse Data ========== #
+ZZZ_UID = os.getenv('ZZZ_UID')
+HOYOLAB_LTUID = os.getenv('HOYOLAB_LTUID ')
+HOYOLAB_LTOKEN = os.getenv('HOYOLAB_LTOKEN')

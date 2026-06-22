@@ -31,12 +31,20 @@ from device.system_info import (get_system_performance, check_battery_threshold,
 from device.performance_plot import plot_performance_metrics
 from device.security_audit import run_security_audit
 
+#==== Zenless Zone Zero: ======#
+#==== Zenless Zone Zero: ====#
+from zenless.zzz_tracker import handle_zzz, validate_hoyolab_cookies, start_zzz_monitor
+
 # Extraction handler
 import re as _re_path_extract
 
 # Boot up message
 history = ConversationHistory(FAIRY_SYSTEM_PROMPT)
 session_state = SessionState()
+validate_hoyolab_cookies()  # Validate the hoyolab cookies in advance
+
+#Boot up asynchronous threads
+start_zzz_monitor(speak, poll_interval=3600)
 start_battery_monitor(speak, poll_interval=60)
 
 speak(get_greet_ack())
@@ -265,6 +273,11 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         battery_warning = check_battery_threshold()
         if battery_warning:
             speak(battery_warning)
+        return ""
+    
+    if intent == "zzz":
+        result = handle_zzz(fairy_request)
+        speak(result)
         return ""
     
     if intent == "reset":

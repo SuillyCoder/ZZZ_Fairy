@@ -14,7 +14,7 @@ INTENT_KEYWORDS = {
     "code":    ["review my code", "review the code", "review this file", "code review", "comment my code", "comment this file", "add comments", "auto comment", "commit message", "generate a commit", "git commit", "diagnose this error", "debug this", "fix this error", "refactor", "is this too long", "review the file at", "comment the file at"],
     "discord": ["discord", "server messages", "group chat", "group chats", "check discord", "discord messages", "any messages", "new messages", "check messages", "weirdos", "abode", "the abode", "weirdo's abode", "the weirdo's abode"],
     "reset":   ["forget everything", "clear history", "start over", "reset"],
-    "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters"],
+    "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters", "showcase", "my agents", "my builds", "battery charge", "commission", "engagement", "weekly task", "banner", "next character", "upcoming character", "patch", "leaks", "leak", "rumor", "rumour", "announcement", "announcements"],
     "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk", "system status", "clear cache", "clear temp", "clear my cache", "free up space", "temp files", "task manager", "open task manager", "performance tab", "security check", "vulnerability", "security audit", "am i secure", "is my pc secure", "plot my performance", "plot performance", "graph my performance", "performance chart", "network usage", "chart my performance"],
     "chat":    [],  # Default fallback — no keywords needed
 }
