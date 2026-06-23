@@ -22,7 +22,4 @@
 <p align="center">
 <p>Having this, I thought: "wouldn't it be funny if I made a little side project related to Zenless Zone Zero?" And I did. There's an AI-Assistant character in the game, by the name of Fairy: the main AI Assistant that helps out the protagonists in the game. Think of her like the Jarvis of the game. SHe's capable of a lot of things, ranging from menial tasks to high-performing tasks. I thought this would be the PERFECT opportunity to not only show my love for the game, but also work towards a practical goal towards my own development and building up my portfolio. Fairy has some use cases in mind (web API fetching, automation, device control, and even Zenless information extraction), but the project will be far from perfect or finished. But hey, it's a learning experience, and that's the way I like it. </p>
 
-#Use Cases
-This is where we'll insert all of the use cases for Fairy, but we'll do that soon (when we got more time to write the readme that is)
-
 
