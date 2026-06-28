@@ -11,7 +11,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #Imported variables from config.py
-from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, model, HIGHPASS_CUTOFF, MIC_GAIN
+from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, model, HIGHPASS_CUTOFF, MIC_GAIN, MAX_RECORDING_DURATION
 #DSP filter function imports
 from scipy.signal import butter, lfilter
 
@@ -43,8 +43,10 @@ def audio_filter(audio_chunk, gain=MIC_GAIN, cutoff=HIGHPASS_CUTOFF, sample_rate
 def record_audio():
 
     audio_chunks = [] #initialize audio chunks array
-    silent_chunks = 0 #chunks for dead air
-    chunks_for_silence = int((SAMPLE_RATE / CHUNK_SIZE) * SILENCE_DURATION) # How many silent chunks = SILENCE_DURATION seconds of silence
+    has_spoken = False  # True once we've detected at least one non-silent chunk
+    last_sound_time = None  # Timestamp of the most recent confirmed (debounced) non-silent chunk
+    loud_streak = 0  # Consecutive loud chunks seen in a row — used to debounce brief spikes
+    LOUD_STREAK_NEEDED = 2  # Require 2 consecutive loud chunks (~32ms) before counting as real sound
     recording_done = False
 
     #Drain any audio already sitting in the mic buffer
@@ -53,7 +55,7 @@ def record_audio():
     chunks_received = 0
 
     def callback(indata, frames, time_info, status):
-        nonlocal silent_chunks, recording_done, chunks_received
+        nonlocal recording_done, chunks_received, has_spoken, last_sound_time, loud_streak
         chunks_received += 1
         if chunks_received <= drain_chunks:
             return
@@ -65,16 +67,23 @@ def record_audio():
         audio_chunks.append(chunk) #add that chunk to the audio_chunk array
         volume = np.sqrt(np.mean(chunk **2)) #How loud is the chunk? (Measured after amplification)
 
-        if volume < SILENCE_THRESHOLD:
-            silent_chunks += 1
+        now = time.time()
+        if volume >= SILENCE_THRESHOLD:
+            loud_streak += 1
         else:
-            silent_chunks = 0
-        
-        # Stop condition: enough silence after at least some speech
-        if silent_chunks >= chunks_for_silence and len(audio_chunks) > chunks_for_silence:
+            loud_streak = 0
+        # Debounce: only count this as real speech once we've seen several
+        # loud chunks in a row. A single isolated spike (keyboard click,
+        # breath, mic pop) won't pass this and won't reset the silence clock.
+        if loud_streak >= LOUD_STREAK_NEEDED:
+            has_spoken = True
+            last_sound_time = now
+        # Stop condition: once speech has started, stop after SILENCE_DURATION
+        # seconds with no *confirmed* sound at all — measured by wall-clock
+        # time elapsed since the last debounced loud chunk.
+        if has_spoken and last_sound_time is not None and (now - last_sound_time) >= SILENCE_DURATION:
             recording_done = True
 
-              # Open a non-blocking input stream with our callback
     with sd.InputStream(
         samplerate=SAMPLE_RATE,
         channels=CHANNELS,
@@ -82,9 +91,15 @@ def record_audio():
         blocksize=CHUNK_SIZE,
         callback=callback   # Called automatically for every chunk
     ):
-        # Wait until the callback signals we're done
-        # Check every 50ms — very lightweight
+        # Wait until the callback signals we're done, or until the hard
+        # safety cap is hit — whichever comes first. The cap only matters
+        # now if speech never stops (e.g. continuous background noise);
+        # normal utterances stop on the SILENCE_DURATION condition above.
+        start_time = time.time()
         while not recording_done:
+            if time.time() - start_time > MAX_RECORDING_DURATION:
+                print(f"[Recording] Hit {MAX_RECORDING_DURATION}s safety cap — stopping.")
+                break
             time.sleep(0.05)
 
     if not audio_chunks:
@@ -120,13 +135,25 @@ def transcribe_audio(audio_array): #Passes the 1D Array Sample as input paramete
         print(f"[Transcription error]: {e}")
         return ""
 
+SHORT_CONFIRMATION_WORDS = {
+    "yes", "yeah", "yep", "sure", "please", "okay", "ok",
+    "no", "nah", "nope",
+}
+
 def is_valid_transcription(text):
-    if not text or len(text.strip()) < 3:
+    if not text:
         return False
-    if text.strip() in NOISE_PATTERNS:
+    stripped = text.strip()
+    # Short yes/no replies are deliberate — let them through before the
+    # length/repetition checks below, which would otherwise discard them.
+    if stripped in SHORT_CONFIRMATION_WORDS:
+        return True
+    if len(stripped) < 3:
+        return False
+    if stripped in NOISE_PATTERNS:
         return False
     # Filter out single repeated words (another Whisper hallucination pattern)
-    words = text.strip().split()
+    words = stripped.split()
     if len(words) <= 2 and len(set(words)) == 1:
         # e.g. "the the" or "um" — likely noise
         return False

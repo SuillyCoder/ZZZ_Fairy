@@ -6,7 +6,7 @@ from config import OWM_API_KEY
 #OpenWeatherMap config settings
 
 OWM_BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
-CITY = "Cebu City"
+CITY = "CEBU CITY"
 COUNTRY_CODE = "PH"
 UNITS = "metric"
 

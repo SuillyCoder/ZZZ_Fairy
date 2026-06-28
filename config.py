@@ -44,9 +44,10 @@ VOICE_SAMPLE_RATE = 24000 #24k Hz
 VOSK_MODEL_PATH = "vosk_model"
 
 # ==== VAD Config Settings ====
-SILENCE_THRESHOLD = 0.01   # Volume level below this = silence (raise if too sensitive)
-SILENCE_DURATION = 0.7     # Seconds of silence before we assume you're done talking
+SILENCE_THRESHOLD = 0.018  # Volume level below this = silence (raise if too sensitive)
+SILENCE_DURATION = 1.5     # Seconds of silence before we assume you're done talking
 CHUNK_SIZE = 512            # How many samples to read at a time (smaller = more responsive)
+MAX_RECORDING_DURATION = 12  # Hard safety cap (seconds) — stops recording even if silence is never detected
 
 #===== Audio DSP Filter Parameters ======
 MIC_GAIN = 3.0           # Amplification multiplier — start at 3.0, tune from there

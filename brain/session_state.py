@@ -9,7 +9,7 @@ class SessionState: #declare a single class instance of a session
         self.last_updated = time.time() #Timestamp for last updated session
 
     #State updating based on current state of session flags
-    def update(self, intent:str, topic:str, str=None, expects_followup: bool = False):
+    def update(self, intent:str, topic:str, expects_followup: bool = False):
         self.last_intent = intent
         if topic is not None: 
             self.last_topic = topic

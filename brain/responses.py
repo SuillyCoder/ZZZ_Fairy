@@ -15,7 +15,8 @@ GREETING_ACKS =  [
 #Wakeword-detection responses
 WAKE_ACKS =  [
     "Yes, Master Proxy?", 
-    "Mhm?", "Go on.", 
+    "Mhm?", 
+    "Go on.", 
     "I'm listening, Master.", 
     "What is it?", 
     "At your service, Master.", 

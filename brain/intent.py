@@ -16,6 +16,7 @@ INTENT_KEYWORDS = {
     "reset":   ["forget everything", "clear history", "start over", "reset"],
     "zzz":     ["zenless", "zzz", "hoyoverse", "my account", "my characters", "showcase", "my agents", "my builds", "battery charge", "commission", "engagement", "weekly task", "banner", "next character", "upcoming character", "patch", "leaks", "leak", "rumor", "rumour", "announcement", "announcements"],
     "system":  ["battery", "cpu", "ram", "performance", "memory usage", "disk", "system status", "clear cache", "clear temp", "clear my cache", "free up space", "temp files", "task manager", "open task manager", "performance tab", "security check", "vulnerability", "security audit", "am i secure", "is my pc secure", "plot my performance", "plot performance", "graph my performance", "performance chart", "network usage", "chart my performance"],
+    "time":    ["what time is it", "time is it", "what's the time", "whats the time", "is the time", "current time", "tell me the time", "what day is it", "what's the date", "whats the date", "what is the date", "what's today's date", "todays date", "what day is today", "what's the day today", "what is today's date"],
     "chat":    [],  # Default fallback — no keywords needed
 }
 

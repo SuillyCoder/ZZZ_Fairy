@@ -9,6 +9,9 @@ from brain.fairy_persona import FAIRY_SYSTEM_PROMPT
 from brain.intent import classify_intent
 from brain.session_state import SessionState
 from brain.responses import get_greet_ack, get_wake_ack, get_empty_ack, get_confirmation_ack, get_shutdown_ack, get_decline_ack
+from datetime import datetime
+from zoneinfo import ZoneInfo
+PH_TIMEZONE = ZoneInfo("Asia/Manila")  # Philippine Time — same zone as Cebu City
 
 # ============= USE CASE IMPORT CALLS ============ #
 
@@ -96,6 +99,19 @@ pending_commit = {"repo_path": None, "message": None}
 
 #Intent (Use Case) handling
 def handle_intent(intent: str, fairy_request: str) -> str | None:
+    if intent == "time":
+        now_ph = datetime.now(PH_TIMEZONE)
+        text = fairy_request.lower()
+        wants_date = any(w in text for w in ["date", "day is it", "day today"])
+        wants_time = "time" in text
+        if wants_date and not wants_time:
+            return now_ph.strftime("Today is %A, %B %d, %Y, Master.")
+        # Default to time (also covers "what time is it" and ambiguous phrasing).
+        # Built manually rather than via %-I/%#I, since those strftime flags
+        # aren't portable to Windows (this project runs on Windows).
+        hour_12 = now_ph.hour % 12 or 12
+        return f"It's {hour_12}:{now_ph.minute:02d} {now_ph.strftime('%p')} Philippine Time, Master."
+
     if intent == "weather":
         result = get_weather()
         speak(result)
@@ -289,18 +305,34 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
     return None
 
 # Main loop
+conversation_active = False  # True once we've had at least one real exchange this "wake" cycle
 while True:
-    inline_command = get_user_input(is_wakeword_check=True)  # Standby until wake word is detected
-    if inline_command and len(inline_command) > 3:
-        # Command was already in the wake word sentence — use it directly
-        fairy_request = inline_command
-        print(f"[Inline command detected]: {fairy_request}")
-    else:
-        speak(get_wake_ack()) # Nothing after the wake word — listen for a separate request
+    if conversation_active:
+        # Already mid-conversation — skip the wake-word standby step entirely.
+        # Listen directly for the next request; empty input here means
+        # "didn't catch that", not "waiting to be woken up".
         fairy_request = get_user_input()
+        if not fairy_request:
+            speak(get_empty_ack())
+            conversation_active = False  # Drop back to standby after a missed turn
+            continue
+    else:
+        inline_command = get_user_input(is_wakeword_check=True)  # Standby until wake word is detected
+        if inline_command and inline_command.strip():
+            # Command was already in the wake word sentence — use it directly
+            fairy_request = inline_command
+            print(f"[Inline command detected]: {fairy_request}")
+        else:
+            speak(get_wake_ack()) # Nothing after the wake word — listen for a separate request
+            fairy_request = get_user_input()
+            if not fairy_request:
+                speak(get_empty_ack())  # Wake word fired but nothing usable followed
+                continue
 
     if not fairy_request:
         continue #Carry on if nothing was heard
+
+    conversation_active = True  # We got a real request — stay in conversation mode
 
     intent = classify_intent(fairy_request, session_state) #Tries to extract the intent based on STT input
     print(f"[Intent]: {intent}") #Print out the user's intent
@@ -337,7 +369,7 @@ while True:
         #Banter window (for additional follow up) -> will edit more during Phase 4
         followup  = get_user_input()
 
-        if followup and len(followup) > 3 and classify_intent(followup) != "exit":
+        if followup and followup.strip() and classify_intent(followup) != "exit":
                 followup_intent = classify_intent(followup, session_state) #classify the intent of the follow up (if there is any)
                 followup_direct = handle_intent(followup_intent, followup) #Handle the intent of the followup directly
         

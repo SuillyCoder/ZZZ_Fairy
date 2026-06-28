@@ -36,7 +36,7 @@ def validate_hoyolab_cookies() -> bool: #Validate the passed cookies
         print("[ZZZ]: HoYoLAB cookies not configured — skipping validation.")
         return False
     try:
-        client = build_hoyolab_client #Construct the client\
+        client = build_hoyolab_client() #Construct the client\
         asyncio.run(client.get.zzz_notes())
         print("[ZZZ]: HoYoLAB session validated successfully.") #Successful ZZZ Client Creation
         return True
@@ -129,12 +129,12 @@ def get_character_showcase() -> str: #Acquire showcase of ZZZ Character Roster
         name = lookup.get(agent_id, f"agent {agent_id}")
         named.append(f"{name} at level {a.get('Level', '?')}")
 
-        spoken = (  #Speak out the Enka.net extracted results
-            f"{nickname} is Inter-Knot level {level}, with {count} agent"
-            f"{'s' if count != 1 else ''} in the public showcase, Master. "
-            f"Top agents: {', '.join(named)}."
-        )
-        return spoken
+    spoken = (  #Speak out the Enka.net extracted results
+        f"{nickname} is Inter-Knot level {level}, with {count} agent"
+        f"{'s' if count != 1 else ''} in the public showcase, Master. "
+        f"Top agents: {', '.join(named)}."
+    )
+    return spoken
     
 # ========== HOYOLAB HELPERS ============= #
 
