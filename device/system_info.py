@@ -11,7 +11,7 @@ def bytes_to_readable(num_bytes: int) -> str: #Convert byte digit to string
             return f"{num_bytes: .2f} {unit}" #Return the current reading
         num_bytes /= step #Divide the num bytes by the step for conversion
 
-        return f"{num_bytes: .2f} PB"
+    return f"{num_bytes: .2f} PB"
 
 def get_battery_info():
     #Assign some battery info to a variable
@@ -113,9 +113,9 @@ def clear_cache(temp_dir: str) -> str:
     cleared = skipped = freed_bytes = 0 #Variables for indicating cleaned status
 
     for entry in os.listdir(temp_dir):
-        full_path = os.path = os.path.join(temp_dir, entry) #Extracting full path for cache file to be cleared
+        full_path = os.path.join(temp_dir, entry) #Extracting full path for cache file to be cleared
         try: 
-            if os.path.isfile(full_path) or os.path.isLink(full_path):
+            if os.path.isfile(full_path) or os.path.islink(full_path):
                 freed_bytes += os.path.getsize(full_path) #Accumulate freed bytes
                 os.remove(full_path)
                 cleared += 1

@@ -54,7 +54,7 @@ def check_open_ports() -> tuple[bool, str]:
     except(psutil.AccessDenied, PermissionError): #Throw exception if access was forbidden
         return False, "Could not check open ports — try running as Administrator for full results."
     listening_watchlist_hits = set()
-    for conn in connections(): #For each of the open port connections...
+    for conn in connections: #For each of the open port connections...
         if conn.status == psutil.CONN_LISTEN and conn.laddr: #If a port is actively listening and also has a local address
             port = conn.laddr.port #Acquire that said local address
             if port in WATCHLIST_PORTS: #If one of the actively listening ports is in the list of ports to check

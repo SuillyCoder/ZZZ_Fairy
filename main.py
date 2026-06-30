@@ -300,7 +300,7 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
             speak(result)
             return ""
  
-        if any(w in text for w in ["security", "vulnerability", "secure"]):
+        if any(w in text for w in ["security", "vulnerability", "secure", "port", "ports"]):
             speak("Running a quick security check, Master. One moment.")
             result = run_security_audit()
             speak(result)
