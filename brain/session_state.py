@@ -1,4 +1,4 @@
-import time
+import time, re
 
 class SessionState: #declare a single class instance of a session
     def __init__(self):
@@ -26,8 +26,8 @@ class SessionState: #declare a single class instance of a session
         declining_words = ["no", "nah", "nope", "don't", "do not", "negative"] #Declining words
  
         #Classify directive either as affirmative or negative
-        is_affirmative = any(word in text_lower for word in affirming_words)
-        is_negative = any(word in text_lower for word in declining_words)
+        is_affirmative = any(re.search(r'\b' + re.escape(word) + r'\b', text_lower) for word in affirming_words)
+        is_negative = any(re.search(r'\b' + re.escape(word) + r'\b', text_lower) for word in declining_words)
 
         if is_affirmative and not is_negative: #Affirming directive detected
             return self.last_intent #fulfill the intent

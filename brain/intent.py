@@ -9,6 +9,7 @@ INTENT_KEYWORDS = {
     "exit":    ["quit", "exit", "shut down", "shutdown", "goodbye", "bye", "turn off", "turnoff", "power off", "poweroff", "go to sleep"],
     "weather": ["weather", "temperature", "rain", "forecast", "hot", "cold outside"],
     "news":    ["news", "headlines", "latest", "what happened", "latest news"],
+    "news_search": ["anything about", "anything on", "do you have anything", "is there news", "what about", "search for news", "look up", "find news about", "tell me about", "what's happening with", "updates on"],
     "email":   ["email", "emails", "mail", "inbox", "unread", "check my email", "any mail", "any emails", "do i have mail", "mark as read"],
     "finance": ["expense", "expenses", "spending", "spendings", "spent", "money", "budget", "finance", "financial", "tracker", "how much did i", "how much have i", "monthly", "category breakdown", "plot my", "chart my", "recommend", "trip spending", "japan trip", "summary report", "graph", "plot", "chart", "visualize", "visualise", "compare my", "comparison of my", "timeline", "superimposed", "breakdown"],
     "code":    ["review my code", "review the code", "review this file", "code review", "comment my code", "comment this file", "add comments", "auto comment", "commit message", "generate a commit", "git commit", "diagnose this error", "debug this", "fix this error", "refactor", "is this too long", "review the file at", "comment the file at"],
@@ -27,6 +28,17 @@ def classify_intent(text: str, session_state=None) -> str:
         resolved = session_state.resolve_followup(text) #Load in a session state yet to be resolved by Fairy
         if resolved is not None:
             return resolved
+        
+    #Context Aware for News
+    if (session_state.last_intent == "news"
+                and session_state.awaiting_followup
+                and not any(
+                    re.search(r'\b' + re.escape(kw) + r'\b', text_lower)
+                    for intent, kws in INTENT_KEYWORDS.items()
+                    if intent not in ("news", "news_search", "chat")
+                    for kw in kws
+                )):
+            return "news_search"
 
     for intent, keywords in INTENT_KEYWORDS.items():
         if intent == "chat":

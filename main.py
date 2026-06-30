@@ -21,7 +21,7 @@ from voice.speaker import speak
 
 #==== API: ====#
 from api.weather import get_weather
-from api.news import get_news
+from api.news import get_news, search_news, extract_news_topic
 
 #==== Automation: ====#
 from automation.email_handler import get_unread_emails, mark_all_fetched_as_read
@@ -51,7 +51,8 @@ start_zzz_monitor(speak, poll_interval=3600)
 start_battery_monitor(speak, poll_interval=60)
 
 speak(get_greet_ack())
-confirm_triggers = ["yes", "sure", "go ahead", "open", "yeah", "please", "yes please", "please do"]
+affirm_triggers = ["yes", "sure", "go ahead", "open", "yeah", "please", "yes please", "please do"]
+decline_triggers = ["no", "nope", "no thanks", "no fairy", "don't", "dont", "do not", "no please", "no thank you"]
 
 # TEMP — INPUT MODE TOGGLE (remove before MVP finalization)
 speak("Please confirm if you would like to communicate via terminal or voice input")
@@ -113,17 +114,41 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         return f"It's {hour_12}:{now_ph.minute:02d} {now_ph.strftime('%p')} Philippine Time, Master."
 
     if intent == "weather":
-        result = get_weather()
+        result = get_weather(fairy_request)
         speak(result)
-        speak("If you'd like, master, I can open up Ack-you-Weather to provide you with this entire week's forecast for Cebu City")
-        confirmation = get_user_input()
-        if confirmation and any(word in confirmation.lower() for word in confirm_triggers):
-            import webbrowser
-            speak(get_confirmation_ack())
-            webbrowser.open("https://www.accuweather.com/en/ph/cebu-city/264885/weather-forecast/264885")
-            speak("Displaying week-long forecast for Cebu City. Please standby...")
-        else:
-            speak("Well, alright then. What else can I do for you, Master?")
+
+        # Known error strings returned by get_weather() — only offer the
+        # AccuWeather follow-up when the fetch actually succeeded.
+        weather_error_prefixes = (
+            "My weather API key",
+            "I couldn't find weather data",
+            "I couldn't reach the weather service",
+            "The weather request timed out",
+            "I got a weather response but couldn't parse",
+            "Something went wrong while fetching the weather",
+        )
+        weather_failed = result.startswith(weather_error_prefixes)
+
+        if not weather_failed:
+            speak("If you'd like, master, I can open up Ack-you-Weather to provide you with this entire week's forecast for Cebu City")
+            while True:
+                confirmation = get_user_input()
+                if not confirmation or not confirmation.strip():
+                    speak(get_empty_ack())   # Empty input — re-prompt
+                    continue
+                if any(word in confirmation.lower() for word in affirm_triggers):
+                    import webbrowser
+                    speak(get_confirmation_ack())
+                    webbrowser.open("https://www.accuweather.com/en/ph/cebu-city/264885/weather-forecast/264885")
+                    speak("Displaying week-long forecast for Cebu City. Please standby...")
+                    break
+                elif any(word in confirmation.lower() for word in decline_triggers):
+                    speak("Well, alright then. What else can I do for you, Master?")
+                    break
+                else:
+                    speak("I didn't quite catch that, Master — yes or no?")  # Ambiguous — re-prompt
+                    # No break — loop continues
+
         session_state.update(intent="weather", topic="Cebu City weather", expects_followup=False)
         return ""   # Return empty string so main.py skips the LLM but doesn't crash
  
@@ -132,26 +157,45 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         if not result:
             return "Master, I can't seem to retrieve any headlines."
         speak(result)
+        session_state.update(intent="news", topic="Cebu news", expects_followup=True)  #Smart intent classification of wanting more news
         speak("Want me to open a news page for the full story? I can pull up SunStar Cebu or Cebu Daily News.")
-        confirmation = get_user_input()
-        if confirmation:
-            import webbrowser
+        while True:
+            confirmation = get_user_input()
+            if not confirmation or not confirmation.strip():
+                speak(get_empty_ack())   # Empty — re-prompt
+                continue
             text = confirmation.lower()
-            if "sunstar" in text or "sun star" in text:
-                speak(get_confirmation_ack())
-                webbrowser.open("https://www.sunstar.com.ph/cebu")
-                speak("Opening SunStar Cebu for you, Master")
-            elif "cdn" in text or "daily news" in text or "inquirer" in text:
-                speak(get_confirmation_ack())
-                webbrowser.open("https://cebudailynews.inquirer.net/")
-                speak("Opening Cebu Daily News for you, Master")
-            elif any(word in text for word in ["yes", "sure", "go ahead", "yeah", "open"]):
-                speak(get_confirmation_ack())
-                webbrowser.open("https://www.sunstar.com.ph/cebu")  # Default to SunStar
-                speak("Opening SunStar Cebu for you, Master")
-            else:
+            if any(word in text for word in affirm_triggers):
+                import webbrowser
+                if "sunstar" in text or "sun star" in text:
+                    speak(get_confirmation_ack())
+                    webbrowser.open("https://www.sunstar.com.ph/cebu")
+                    speak("Opening SunStar Cebu for you, Master")
+                elif "cdn" in text or "daily news" in text or "inquirer" in text:
+                    speak(get_confirmation_ack())
+                    webbrowser.open("https://cebudailynews.inquirer.net/")
+                    speak("Opening Cebu Daily News for you, Master")
+                else:
+                    speak(get_confirmation_ack())
+                    webbrowser.open("https://www.sunstar.com.ph/cebu")  # Default to SunStar
+                    speak("Opening SunStar Cebu for you, Master")
+                break
+            elif any(word in text for word in decline_triggers):
                 speak("Well, alright then. What else can I do for you, Master?")
+                break
+            else:
+                speak("I didn't quite catch that, Master — SunStar, Cebu Daily News, or no?")  # Ambiguous — re-prompt
+                # No break — loop continues
+
         return ""   # Same as above — skip LLM
+    
+    if intent == "news_search":
+        topic = extract_news_topic(fairy_request)
+        result = search_news(topic)
+        speak(result)
+        # Stay in news context so chained searches keep working
+        session_state.update(intent="news", topic=topic, expects_followup=True)
+        return ""
  
     if intent == "email":
         result = get_unread_emails()
@@ -161,7 +205,7 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
         if "no unread" not in result.lower() and "problem" not in result.lower() and "couldn't" not in result.lower():
             speak("Should I mark those as read, Master?")
             confirmation = get_user_input()
-            if confirmation and any(word in confirmation.lower() for word in confirm_triggers):
+            if confirmation and any(word in confirmation.lower() for word in affirm_triggers):
                 speak(get_confirmation_ack())
                 mark_result = mark_all_fetched_as_read()
                 speak(mark_result)
@@ -192,7 +236,7 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
             speak(summary)
             if temp_path:
                 confirmation = get_user_input()
-                if confirmation and any(w in confirmation.lower() for w in confirm_triggers):
+                if confirmation and any(w in confirmation.lower() for w in affirm_triggers):
                     speak(get_confirmation_ack())
                     result = apply_commented_version(path, temp_path)
                     speak(result)
@@ -212,7 +256,7 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
             speak(summary)
             if draft_message:
                 confirmation = get_user_input()
-                if confirmation and any(w in confirmation.lower() for w in confirm_triggers):
+                if confirmation and any(w in confirmation.lower() for w in affirm_triggers):
                     speak(get_confirmation_ack())
                     result = confirm_commit(repo_path, draft_message)
                     speak(result)
@@ -268,7 +312,7 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
             if "already clean" in summary.lower():
                 return ""
             confirmation = get_user_input()
-            if confirmation and any(w in confirmation.lower() for w in confirm_triggers):
+            if confirmation and any(w in confirmation.lower() for w in affirm_triggers):
                 speak(get_confirmation_ack())
                 result = clear_cache(temp_dir)
                 speak(result)
