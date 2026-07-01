@@ -2,6 +2,8 @@ from kokoro_onnx import Kokoro
 import sounddevice as sd
 import numpy as np
 from scipy import signal
+import threading
+speak_lock = threading.Lock() #Add a thread blocker to handle multiple speaking instances
 
 #Adding the root to the search path when importing from other files
 import sys, os
@@ -29,28 +31,29 @@ def apply_robot_ripple(audio: np.ndarray, sample_rate: int, ripple_rate, ripple_
 
 #Function for Fairy to speak
 def speak(text :str):
-    print(f"Fairy says: {text}")
+    with speak_lock: #Only one spoken phrase at a time. Prevents thread overlap
+        print(f"Fairy says: {text}")
 
-    #A guard to check if text has actually been administered
-    if not text or not text.strip:   
-        print("[Speaker]: Nothing to say — empty response received.")
-        return
+        #A guard to check if text has actually been administered
+        if not text or not text.strip:   
+            print("[Speaker]: Nothing to say — empty response received.")
+            return
     
-    samples, sample_rate = kokoro.create(
-        text,
-        voice = VOICE_VARIANT,
-        speed = 1.0,
-        lang = "en-us"
-    )
+        samples, sample_rate = kokoro.create(
+            text,
+            voice = VOICE_VARIANT,
+            speed = 1.0,
+            lang = "en-us"
+        )
 
-    if samples is None or len(samples) == 0: #Empty sample generation
-        print("[Speaker]: Kokoro returned no audio.")
-        return
+        if samples is None or len(samples) == 0: #Empty sample generation
+            print("[Speaker]: Kokoro returned no audio.")
+            return
 
-    rippled_audio = apply_robot_ripple(samples, sample_rate, ripple_rate, ripple_depth)
+        rippled_audio = apply_robot_ripple(samples, sample_rate, ripple_rate, ripple_depth)
     
-    sd.play(rippled_audio, samplerate=sample_rate) #Play the audio based on the given sample rate
-    sd.wait() #Wait for it to finish
+        sd.play(rippled_audio, samplerate=sample_rate) #Play the audio based on the given sample rate
+        sd.wait() #Wait for it to finish
 
 
 

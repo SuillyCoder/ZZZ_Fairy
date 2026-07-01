@@ -53,7 +53,7 @@ MAX_RECORDING_DURATION = 12  # Hard safety cap (seconds) — stops recording eve
 MIC_GAIN = 3.0           # Amplification multiplier — start at 3.0, tune from there
 HIGHPASS_CUTOFF = 100    # Hz — removes rumble/hum below typical speech range
 
-# ===== Ollama Settings=====
+# ===== Ollama Settings=====S
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME  = "lfm2.5"  # Must match what you pulled in Ollama
 
@@ -82,5 +82,5 @@ DISCORD_SERVER_ID = int(RAW_SERVER_ID) if RAW_SERVER_ID.isdigit() else None #Typ
 
 # ======== Hoyoverse Data ========== #
 ZZZ_UID = os.getenv('ZZZ_UID')
-HOYOLAB_LTUID = os.getenv('HOYOLAB_LTUID ')
+HOYOLAB_LTUID = os.getenv('HOYOLAB_LTUID')
 HOYOLAB_LTOKEN = os.getenv('HOYOLAB_LTOKEN')

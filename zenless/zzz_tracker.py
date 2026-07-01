@@ -1,8 +1,8 @@
-import os, sys, asyncio, json, time, threading, requests, genshin
+import os, sys, asyncio, json, time, threading, requests, genshin, ssl, aiohttp
 
 #Import absolute filepath
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import ZZZ_UID, HOYOLAB_LTUID, HOYOLAB_LTOKEN, FAIRY_GROQ_API_KEY, GROQ_MODEL, PROJECT_ROOT
+from config import ZZZ_UID, HOYOLAB_LTUID, HOYOLAB_LTOKEN, FAIRY_GROQ_API_KEY, GROQ_MODEL
 
 from groq import Groq
 groq_client = Groq(api_key=FAIRY_GROQ_API_KEY)
@@ -21,6 +21,10 @@ ENKA_LOCS_URL = "https://raw.githubusercontent.com/EnkaNetwork/API-docs/master/s
 AGENT_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_zzz_agent_cache.json")
 AGENT_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7  # 7 days — agent rosters change roughly per patch, not daily
 
+last_showcase_fetch = 0.0
+SHOWCASE_COOLDOWN_SECONDS = 65  # just over Enka's ~60s cache window
+
+
 # ========== Authentication ============ #
 
 def build_hoyolab_client() -> genshin.Client:
@@ -29,7 +33,7 @@ def build_hoyolab_client() -> genshin.Client:
         game=genshin.types.Game.ZZZ, #Set the game to fetch data about to Zenless Zone Zero
         uid=int(ZZZ_UID) if ZZZ_UID else None, #Fetch the specific ZZZ UID
     )
-    return client #Returns the created client
+    return client
 
 def validate_hoyolab_cookies() -> bool: #Validate the passed cookies
     if not (HOYOLAB_LTUID and HOYOLAB_LTOKEN): #If the cookies do not match
@@ -37,7 +41,7 @@ def validate_hoyolab_cookies() -> bool: #Validate the passed cookies
         return False
     try:
         client = build_hoyolab_client() #Construct the client\
-        asyncio.run(client.get.zzz_notes())
+        asyncio.run(client.get_zzz_notes())
         print("[ZZZ]: HoYoLAB session validated successfully.") #Successful ZZZ Client Creation
         return True
     #Exception throwing
@@ -93,6 +97,15 @@ def get_zzz_agents() -> dict[str, str]: #Returns their actual display name using
         return {}
     
 def get_character_showcase() -> str: #Acquire showcase of ZZZ Character Roster
+
+    #Rate limiting to not retrieve requests too frequently
+    global last_showcase_fetch #Global variable of last showcase
+    now = time.time() #Get the current time
+    if now - last_showcase_fetch < SHOWCASE_COOLDOWN_SECONDS: #If current fetched time is lesser than preset cooldown time
+        remaining = int(SHOWCASE_COOLDOWN_SECONDS - (now - last_showcase_fetch)) #Calculate remaining time
+        return f"I just checked your showcase, Master. Enka needs about {remaining} more seconds before I can refresh it." #Flag rate limiting prompt
+    last_showcase_fetch = now #Set the time to last showcase to the current time
+
     if not ZZZ_UID: 
         return "I don't have your ZZZ UID configured, Master. Add ZZZ_UID to the .env file."
     try:
@@ -153,8 +166,8 @@ def get_account_status() -> str:
         return "I ran into a problem reaching HoYoLAB, Master."
     
     parts = []
-    parts.append(f"Battery charge is at {notes.energy.current} out of {notes.energy.max}.") #Check for battery charge
-    parts.append(f"Daily engagement is {notes.vitality.current} out of {notes.vitality.max}.") #Check for daily engagement
+    parts.append(f"Battery charge is at {notes.battery_charge.current} out of {notes.battery_charge.max}.") #Check for battery charge
+    parts.append(f"Daily engagement is {notes.engagement.current} out of {notes.engagement.max}.") #Check for daily engagement
 
     if notes.weekly_task:
         parts.append(f"Weekly task progress is {notes.weekly_task.cur_point} out of {notes.weekly_task.max_point}.")
@@ -169,6 +182,9 @@ def get_banner_status() -> str:
     except requests.exceptions.RequestException as e:
         print(f"[ZZZ Calendar Error]: {e}")
         return "I couldn't reach the banner schedule just now, Master."
+    except Exception as e:
+        print(f"[ZZZ Banner Unexpected Error]: {e}")
+        return "Something went wrong checking the banners, Master."
  
     #Extract the current banners and list them out
     banners = data.get("banners", [])
@@ -197,6 +213,9 @@ def get_latest_zenless_news() -> str:
     except requests.exceptions.RequestException as e:
         print(f"[ZZZ News Error]: {e}")
         return "I couldn't reach the news feed just now, Master."
+    except Exception as e:
+        print(f"[ZZZ News Unexpected Error]: {e}")
+        return "Something went wrong fetching ZZZ news, Master."
     
     if not notices: 
         return "Nothing new from official channels right now, Master."
@@ -234,20 +253,20 @@ energy_nudge_fired = False #Checks if the nudge for the energy cap has been fire
 last_seen_banner_id = None #Checks the most recently seen banner
 
 def check_zzz_nudges() -> str | None:
-    global energy_nudge_fried, last_seen_banner_id
+    global energy_nudge_fired, last_seen_banner_id
 
     #ENERGY NUDGE CHECKER
     if HOYOLAB_LTUID and HOYOLAB_LTOKEN:
         try:
             client = build_hoyolab_client()
             notes = asyncio.run(client.get_zzz_notes())
-            if notes.energy.max > 0:
-                ratio = notes.energy.current / notes.energy.max
+            if notes.battery_charge.max > 0:
+                ratio = notes.battery_charge.current / notes.battery_charge.max
                 if ratio >= ENERGY_NUDGE_THRESHOLD:
                     if not energy_nudge_fired:
                         energy_nudge_fired = True
-                        return (f"Master, your battery charge is at {notes.energy.current} out of "
-                            f"{notes.energy.max} — close to capping. You might want to spend it.")
+                        return (f"Master, your battery charge is at {notes.battery_charge.current} out of "
+                            f"{notes.battery_charge.max} — close to capping. You might want to spend it.")
                 else:
                     energy_nudge_fired = False
         except Exception as e: 
@@ -277,6 +296,8 @@ def check_zzz_nudges() -> str | None:
 
     except requests.exceptions.RequestException as e: 
         print(f"[ZZZ Monitor Error - banner check]: {e}")
+    except Exception as e:
+        print(f"[ZZZ Monitor Unexpected Error - banner check]: {e}")
     return None
 
 # Monitor startup 

@@ -335,9 +335,20 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
             speak(battery_warning)
         return ""
     
+        # AFTER
     if intent == "zzz":
         result = handle_zzz(fairy_request)
         speak(result)
+        # Follow-up: if Fairy offered to open the notice, handle yes/no
+        if "want me to open the full notice" in result.lower():
+            follow = get_user_input()
+            if follow and any(w in follow.lower() for w in affirm_triggers):
+                speak(get_confirmation_ack())
+                import webbrowser
+                webbrowser.open("https://zenless.hoyoverse.com/en-us/news")
+                speak("Opening the official Zenless page for events and notices, Master.")
+            else:
+                speak("Alright, Master. Let me know if you need anything else.")
         return ""
     
     if intent == "reset":
