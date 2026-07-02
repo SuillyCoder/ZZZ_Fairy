@@ -224,6 +224,9 @@ def classify_finance_sub_intent(voice_query: str) -> dict:
         "  trip: the trip name mentioned (or null)\n\n"
         "Use heavy_analysis when the user asks for trends, projections, anomalies, "
         "statistical comparisons, or anything requiring deep mathematical reasoning.\n\n"
+        "If the user asks to 'plot', 'chart', 'graph', 'show a pie chart', or 'visualize' "
+        "category data, use plot_category — NOT category_summary. Only use category_summary "
+        "when they want the answer spoken/read aloud, not a visual chart.\n\n"
         f"User query: \"{voice_query}\""
     )
  

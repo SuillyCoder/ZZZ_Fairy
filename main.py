@@ -40,6 +40,7 @@ from zenless.zzz_tracker import handle_zzz, validate_hoyolab_cookies, start_zzz_
 
 # Extraction handler
 import re as _re_path_extract
+import os
 
 # Boot up message
 history = ConversationHistory(FAIRY_SYSTEM_PROMPT)
@@ -235,30 +236,56 @@ def handle_intent(intent: str, fairy_request: str) -> str | None:
             summary, temp_path = generate_commented_version(path)
             speak(summary)
             if temp_path:
+                pending_comment_preview["filepath"] = path #take in the file path for the file
+                pending_comment_preview["temp_path"] = temp_path #same with a temporary path
                 confirmation = get_user_input()
-                if confirmation and any(w in confirmation.lower() for w in affirm_triggers):
-                    speak(get_confirmation_ack())
-                    result = apply_commented_version(path, temp_path)
+                #Key words for applying and discarding
+                apply_words = ["apply", "keep", "use it"] + affirm_triggers
+                discard_words = ["discard", "throw", "scrap"] + decline_triggers
+                #Variables to confirm command status (apply or discard)
+                is_apply = confirmation and any(w in confirmation.lower() for w in apply_words)
+                is_decline = confirmation and any(w in confirmation.lower() for w in discard_words)
+
+                #Detected Keywords to Apply
+                if is_apply and not is_decline:
+                    speak(get_confirmation_ack()) #Confirm the command
+                    result  = apply_commented_version(path, temp_path) #Apply the commented version at the relative path, and store 
                     speak(result)
+                    #Reset the file paths
+                    pending_comment_preview["filepath"] = None 
+                    pending_comment_preview["temp_path"] = None 
+                #Detected Keywords to Discard
+                elif is_decline:
+                    speak(get_decline_ack()) #Confirm the command
+                    result  = discard_commented_version(temp_path) #Apply the commented version at the relative path, and store 
+                    speak(result)
+                    #Reset the file paths
+                    pending_comment_preview["filepath"] = None 
+                    pending_comment_preview["temp_path"] = None 
+                
                 else:
-                    speak(get_decline_ack())
-                    result = discard_commented_version(temp_path)
-                    speak(result)
+                    speak(f"I've left the preview as-is for now, Master. Say 'apply the comments' or 'discard the preview' when you're ready for '{os.path.basename(path)}'.")
             return ""
  
         if "commit" in text:
             # Path here is treated as the REPO folder, not a single file
             repo_path = path if path else fairy_request.split("at")[-1].strip() if "at" in text else None
             if not repo_path:
-                return "Which repo should I generate a commit message for, Master? Please give me the path."
+                speak("Which repo should I generate a commit message for, Master? Please give me the path.")
+                reply = get_user_input() #Ask the user for which repo Fairy should target
+                repo_path = extract_path(reply) if reply else None
+                if not repo_path and reply and reply.strip():
+                    repo_path = reply.strip().strip('"').strip("'")
+                if not repo_path:
+                    return "I didn't catch a repo path there, Master. Let me know when you're ready." #Fallback in case Fairy doesn't detect the repository
             speak("Reading the diff, Master, one moment.")
-            summary, draft_message = generate_commit_message(repo_path)
+            summary, draft_message, used_unstaged = generate_commit_message(repo_path)
             speak(summary)
             if draft_message:
                 confirmation = get_user_input()
                 if confirmation and any(w in confirmation.lower() for w in affirm_triggers):
                     speak(get_confirmation_ack())
-                    result = confirm_commit(repo_path, draft_message)
+                    result = confirm_commit(repo_path, draft_message, stage_first=used_unstaged)
                     speak(result)
                 else:
                     speak(get_decline_ack())

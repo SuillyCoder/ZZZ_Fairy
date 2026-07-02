@@ -78,7 +78,7 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 # ======== Discord APIs =========== #
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 RAW_SERVER_ID = os.getenv("DISCORD_SERVER_ID")
-DISCORD_SERVER_ID = int(RAW_SERVER_ID) if RAW_SERVER_ID.isdigit() else None #Typecasting from string to integer
+DISCORD_SERVER_ID = int(RAW_SERVER_ID) if RAW_SERVER_ID and RAW_SERVER_ID.isdigit() else None #Typecasting from string to integer
 
 # ======== Hoyoverse Data ========== #
 ZZZ_UID = os.getenv('ZZZ_UID')

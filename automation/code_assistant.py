@@ -201,7 +201,8 @@ def discard_commented_version(temp_path: str) -> str:
 #  LFM2.5 — AUTO-GENERATED COMMIT MESSAGES (with confirmation)
 def generate_commit_message(repo_path: str) -> tuple[str, str | None]:
     if not os.path.isdir(os.path.join(repo_path, ".git")):
-        return f"'{repo_path}' doesn't look like a git repository, Master.", None
+        return f"'{repo_path}' doesn't look like a git repository, Master.", None, False
+    used_unstaged = False
 
     try:
         diff_result = subprocess.run(
@@ -218,17 +219,18 @@ def generate_commit_message(repo_path: str) -> tuple[str, str | None]:
             )
             diff_output = diff_result.stdout.strip()
             if diff_output:
+                used_unstaged = True
                 print("[Code Assistant]: No staged changes found — using unstaged diff instead. "
                       "Remember to 'git add' before committing.")
 
         if not diff_output:
-            return "There's nothing to commit, Master. No staged or unstaged changes detected.", None
+            return "There's nothing to commit, Master. No staged or unstaged changes detected.", None, False
 
     except subprocess.TimeoutExpired:
-        return "Git took too long to respond, Master.", None
+        return "Git took too long to respond, Master.", None, False
     except Exception as e:
         print(f"[Code Assistant - Git Error]: {e}")
-        return "Something went wrong reading the git diff, Master.", None
+        return "Something went wrong reading the git diff, Master.", None, False
 
     # Cap diff size sent to the model — very large diffs get truncated
     max_diff_chars = 6000
@@ -245,22 +247,33 @@ def generate_commit_message(repo_path: str) -> tuple[str, str | None]:
 
     draft = ollama_chat(prompt)
     if not draft:
-        return "I couldn't generate a commit message right now, Master.", None
+        return "I couldn't generate a commit message right now, Master.", None, False
 
     draft = draft.strip().strip('"').strip("'")
+    note = " These are unstaged changes — I'll stage them all before committing." if used_unstaged else ""
     spoken = f"Here's my draft commit message, Master: \"{draft}\". Should I commit with this message?"
-    return spoken, draft
+    return spoken, draft, used_unstaged
 
 
-def confirm_commit(repo_path: str, message: str) -> str: #Actually runs `git commit -m <message>` — ONLY called after the user has explicitly confirmed the drafted message.
+def confirm_commit(repo_path: str, message: str, stage_first: bool = False) -> str: #Actually runs `git commit -m <message>` — ONLY called after the user has explicitly confirmed the drafted message.
     try:
+        if stage_first:
+            #Stage the changes first by adding git add -A
+            add_result = subprocess.run(
+                ["git", "add", "-A"],
+                cwd=repo_path, capture_output=True, text=True, timeout=15
+            )
+            if add_result.returncode != 0:
+                print(f"[Code Assistant - Git Add Error]: {add_result.stderr}")
+                return f"I couldn't stage the changes, Master. Git said: {add_result.stderr.strip()[:150]}"
+        #Proceed to commit once staged vio git commit -m
         result = subprocess.run(
             ["git", "commit", "-m", message],
             cwd=repo_path, capture_output=True, text=True, timeout=15
         )
         if result.returncode != 0:
-            print(f"[Code Assistant - Git Commit Error]: {result.stderr}")
-            return f"The commit failed, Master. Git said: {result.stderr.strip()[:150]}"
+                print(f"[Code Assistant - Git Commit Error]: {result.stderr}")
+                return f"The commit failed, Master. Git said: {result.stderr.strip()[:150]}"
         print(f"[Code Assistant]: Commit successful.\n{result.stdout}")
         return "Committed, Master."
     except Exception as e:
