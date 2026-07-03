@@ -1,57 +1,115 @@
-#PySide6 Imports
-from PySide6.QtWidgets import QWidget #Widget import
-from PySide6.QtCore import Qt, QTimer, Property, QPropertyAnimation #Animation-related imports
-from PySide6.QtGui import QPainter, QColor, QRadialGradient, QPen #Drawing related imports
+#PySide6 related imports
+import os, time, math
+from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import Qt, QTimer, QPointF
+from PySide6.QtGui import QPainter, QPixmap
+
+from config import BASE_DIR #import the base directory path
+ASSET_DIR = os.path.join(BASE_DIR, "gui", "elements")
+
+# Bottom -> top, matches your numbering exactly
+LAYER_FILES = [f"{i}.png" for i in range(2, 9)]
+ROTATING_LAYER_INDEX = LAYER_FILES.index("3.png")  # only element 3 spins
+
 
 #Create a class instance of an orb widget
 class OrbWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self._pulse = 0.0
-        self._rotation = 0.0
+        self.setAttribute(Qt.WA_TranslucentBackground) #Set a translucent background
 
-        self._idle_timer = QTimer(self)
-        self._idle_timer.timeout.connect(self._tick)
-        self._idle_timer.start(16)  # ~60fps
+        self._layers_raw = [] #Initialize the layer stack for the various elements
+        for name in LAYER_FILES: 
+            path = os.path.join(ASSET_DIR, name) #Route to the element path
+            pix = QPixmap(path) #Displays the corresponding image
+            if pix.isNull():
+                print(f"[OrbWidget] Warning: couldn't load {path}")
+            self._layers_raw.append(pix) #Stack the element onto itself
 
-        self._pulse_anim = QPropertyAnimation(self, b"pulse")
-        self._pulse_anim.setDuration(280)
+        loaded = sum(1 for p in self._layers_raw if not p.isNull())
+        print(f"[OrbWidget] Loaded {loaded}/{len(self._layers_raw)} layers from {ASSET_DIR}")
+        
+        self._layers_scaled = []
+        self._cached_size = None
+
+        self._elapsed = 0.0
+        self._speaking = False
+        self._last_time = time.monotonic()
+
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start(16)  # ~60fps
+
+        # Window dragging — this widget fills the frameless window, so it owns the drag
+        self._drag_offset = None
+ 
+    def set_speaking(self, is_speaking: bool): #helper functionto indicate speaking
+        self._speaking = is_speaking
 
     def _tick(self):
-        self._rotation = (self._rotation + 0.6) % 360
+        now = time.monotonic()
+        self._elapsed += now - self._last_time #calculate the elapsed time
+        self._last_time = now
         self.update()
 
-    def getPulse(self): return self._pulse
-    def setPulse(self, v):
-        self._pulse = v
-        self.update()
-    pulse = Property(float, getPulse, setPulse)
-
-    def set_speaking(self, is_speaking: bool):
-        self._pulse_anim.stop()
-        self._pulse_anim.setStartValue(self._pulse)
-        self._pulse_anim.setEndValue(1.0 if is_speaking else 0.0)
-        self._pulse_anim.start()
-
+    def _rescale_layers(self):
+        size = self.size()
+        self._layers_scaled = [
+            pix.scaled(size, Qt.KeepAspectRatio, Qt.SmoothTransformation) if not pix.isNull() else pix
+            for pix in self._layers_raw
+        ]
+        self._cached_size = size
+        
     def paintEvent(self, event):
+        if self._cached_size != self.size():
+            self._rescale_layers()
+
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
         cx, cy = self.width() / 2, self.height() / 2
-        base_r = min(self.width(), self.height()) * 0.42
-        boost = 1.0 + 0.12 * self._pulse
 
-        glow = QRadialGradient(cx, cy, base_r * 1.6 * boost)
-        glow.setColorAt(0.0, QColor(120, 180, 255, int(160 * (0.4 + 0.6 * self._pulse))))
-        glow.setColorAt(1.0, QColor(120, 180, 255, 0))
-        p.setBrush(glow); p.setPen(Qt.NoPen)
-        p.drawEllipse(cx - base_r*1.6, cy - base_r*1.6, base_r*3.2, base_r*3.2)
+        if self._speaking:
+            pulse_speed = 4.0       # faster breathing while talking
+            pulse_amplitude = 0.06
+            base_scale = 1.08       # a little bigger overall
+        else:
+            pulse_speed = 0.6       # very slow idle breathing
+            pulse_amplitude = 0.02
+            base_scale = 1.0
 
-        for i, color in enumerate([QColor(20,40,110), QColor(160,200,255), QColor(60,120,230)]):
-            r = base_r * (1.0 - i*0.28) * boost
-            p.setPen(QPen(color, 3)); p.setBrush(Qt.NoBrush)
-            p.drawEllipse(cx - r, cy - r, r*2, r*2)
+        rotation_deg = (self._elapsed * 18) % 360   # slow constant spin, element 3 only
+        pulse = 1.0 + pulse_amplitude * math.sin(self._elapsed * pulse_speed)
+        overall_scale = base_scale * pulse
 
-        dot_r = base_r * 0.10
-        p.setBrush(QColor(255,255,255)); p.setPen(Qt.NoPen)
-        p.drawEllipse(cx - dot_r*0.3, cy + dot_r*0.6, dot_r, dot_r)
+        for i, pix in enumerate(self._layers_scaled):
+            if pix.isNull():
+                continue
+            p.save()
+            p.translate(cx, cy)
+            if i == ROTATING_LAYER_INDEX:
+                p.rotate(rotation_deg)
+            p.scale(overall_scale, overall_scale)
+            p.drawPixmap(QPointF(-pix.width() / 2, -pix.height() / 2), pix)
+            p.restore()
+
+    # ======= HANDLER FUNCTIONS FOR WINDOW DRAGGING ======= #
+
+    def mousePressEvent(self, event): #Detect if the mouse (left click) has been pressed / clicked
+        if event.button() == Qt.LeftButton: #If equal to the left button
+            self._drag_offset = event.globalPosition().toPoint() - self.window().pos() #Initialize the offset
+            event.accept() #Accept instance of the event
+
+    def mouseMoveEvent(self, event): #Detect if the mouse is being moved
+        if self._drag_offset is not None and event.buttons() & Qt.LeftButton: #If the offset is set to something
+            self.window().move(event.globalPosition().toPoint() - self._drag_offset) #Move the window according to the offset
+            event.accept() #Accept instance of the event
+
+    def mouseReleaseEvent(self, event): #Detect if the mouse has been let go of. 
+        self._drag_offset = None #Clear the instance of the offset
+        event.accept() #Accept instance of the event
+
+    
+
+    
+     

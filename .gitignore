@@ -35,3 +35,6 @@ zenless/_zzz_agent_cache.json
 # OS junk (harmless to add now, saves a headache later)
 Thumbs.db
 .DS_Store
+
+#Don't include the assets publicly 
+elements/
