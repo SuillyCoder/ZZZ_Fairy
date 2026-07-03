@@ -2,7 +2,7 @@ import os, sys, asyncio, json, time, threading, requests, genshin, ssl, aiohttp
 
 #Import absolute filepath
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import ZZZ_UID, HOYOLAB_LTUID, HOYOLAB_LTOKEN, FAIRY_GROQ_API_KEY, GROQ_MODEL
+from config import ZZZ_UID, HOYOLAB_LTUID, HOYOLAB_LTOKEN, FAIRY_GROQ_API_KEY, GROQ_MODEL, BASE_DIR
 
 from groq import Groq
 groq_client = Groq(api_key=FAIRY_GROQ_API_KEY)
@@ -18,7 +18,9 @@ ENERGY_NUDGE_THRESHOLD = 0.9
 #Agent Name via json lookup table
 ENKA_AVATARS_URL = "https://raw.githubusercontent.com/EnkaNetwork/API-docs/master/store/zzz/avatars.json"
 ENKA_LOCS_URL = "https://raw.githubusercontent.com/EnkaNetwork/API-docs/master/store/zzz/locs.json"
-AGENT_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_zzz_agent_cache.json")
+AGENT_CACHE_PATH = os.path.join(BASE_DIR, "zenless", "_zzz_agent_cache.json")
+os.makedirs(os.path.dirname(AGENT_CACHE_PATH), exist_ok=True)
+
 AGENT_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7  # 7 days — agent rosters change roughly per patch, not daily
 
 last_showcase_fetch = 0.0

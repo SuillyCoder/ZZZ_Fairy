@@ -2,6 +2,7 @@ from kokoro_onnx import Kokoro
 import sounddevice as sd
 import numpy as np
 from scipy import signal
+from gui.bridge import fairy_bridge
 import threading
 speak_lock = threading.Lock() #Add a thread blocker to handle multiple speaking instances
 
@@ -31,29 +32,33 @@ def apply_robot_ripple(audio: np.ndarray, sample_rate: int, ripple_rate, ripple_
 
 #Function for Fairy to speak
 def speak(text :str):
-    with speak_lock: #Only one spoken phrase at a time. Prevents thread overlap
-        print(f"Fairy says: {text}")
+    fairy_bridge.speaking_started.emit() #Fire off to a signal to the bridge that Fairy has started to speak
+    try:
+        with speak_lock: #Only one spoken phrase at a time. Prevents thread overlap
+            print(f"Fairy says: {text}")
 
-        #A guard to check if text has actually been administered
-        if not text or not text.strip:   
-            print("[Speaker]: Nothing to say — empty response received.")
-            return
-    
-        samples, sample_rate = kokoro.create(
-            text,
-            voice = VOICE_VARIANT,
-            speed = 1.0,
-            lang = "en-us"
-        )
+            #A guard to check if text has actually been administered
+            if not text or not text.strip:   
+                print("[Speaker]: Nothing to say — empty response received.")
+                return
+        
+            samples, sample_rate = kokoro.create(
+                text,
+                voice = VOICE_VARIANT,
+                speed = 1.0,
+                lang = "en-us"
+            )
 
-        if samples is None or len(samples) == 0: #Empty sample generation
-            print("[Speaker]: Kokoro returned no audio.")
-            return
+            if samples is None or len(samples) == 0: #Empty sample generation
+                print("[Speaker]: Kokoro returned no audio.")
+                return
 
-        rippled_audio = apply_robot_ripple(samples, sample_rate, ripple_rate, ripple_depth)
-    
-        sd.play(rippled_audio, samplerate=sample_rate) #Play the audio based on the given sample rate
-        sd.wait() #Wait for it to finish
+            rippled_audio = apply_robot_ripple(samples, sample_rate, ripple_rate, ripple_depth)
+        
+            sd.play(rippled_audio, samplerate=sample_rate) #Play the audio based on the given sample rate
+            sd.wait() #Wait for it to finish
+    finally:
+        fairy_bridge.speaking_stopped.emit() #Tell the bridge fairy has stopped speaking
 
 
 

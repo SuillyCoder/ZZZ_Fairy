@@ -1,13 +1,13 @@
 import os, sys, time, psutil, matplotlib
-
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-matplotlib.use("TkAgg")
 
 #Absolute file path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
- 
+
 # Where generated plot PNGs get saved (mirrors automation/finance.py) ──
-PLOTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "plots")
+from config import BASE_DIR
+PLOTS_DIR = os.path.join(BASE_DIR, "plots")
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
 #Sampling parameters

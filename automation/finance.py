@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
  
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import GMAIL_CREDENTIALS_PATH, SHEETS_TOKEN_PATH, EXPENSE_SHEET_ID, FAIRY_GROQ_API_KEY, GROQ_MODEL, OLLAMA_URL, MODEL_NAME
+from config import GMAIL_CREDENTIALS_PATH, SHEETS_TOKEN_PATH, EXPENSE_SHEET_ID, FAIRY_GROQ_API_KEY, GROQ_MODEL, OLLAMA_URL, MODEL_NAME, BASE_DIR
 
 # ── Google Auth ──
 from google.auth.transport.requests import Request
@@ -28,7 +28,7 @@ groq_client = Groq(api_key=FAIRY_GROQ_API_KEY)
 SHEETS_SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # ── Where generated plot PNGs get saved ──
-PLOTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "plots")
+PLOTS_DIR = os.path.join(BASE_DIR, "plots")
 os.makedirs(PLOTS_DIR, exist_ok=True)
  
 # ── Calendar month names — used to tell monthly tabs from trip tabs ──

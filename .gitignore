@@ -22,3 +22,16 @@ test_fixtures/
 credentials.json
 token.json
 token_sheets.json
+
+# PyInstaller build output — fully regenerable, never commit
+build/
+dist/
+
+# Runtime-generated cache/preview files
+zenless/_zzz_agent_cache.json
+*.commented_preview.py
+*.commented_preview
+
+# OS junk (harmless to add now, saves a headache later)
+Thumbs.db
+.DS_Store

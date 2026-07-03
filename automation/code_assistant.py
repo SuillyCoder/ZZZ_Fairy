@@ -2,7 +2,7 @@ import os, sys, ast, json, shutil, difflib, subprocess, requests
 
 #Import from config file path 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import OLLAMA_URL, MODEL_NAME, FAIRY_GROQ_API_KEY, GROQ_MODEL
+from config import OLLAMA_URL, MODEL_NAME, FAIRY_GROQ_API_KEY, GROQ_MODEL, BASE_DIR
 
 #Groq model import
 from groq import Groq
@@ -12,7 +12,7 @@ groq_client = Groq(api_key=FAIRY_GROQ_API_KEY)
 FALLBACK_CHUNK_LINES = 80
 
 # Where backups go before any file gets overwritten
-BACKUP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "code_backups")
+BACKUP_DIR = os.path.join(BASE_DIR, "code_backups")
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
 
