@@ -41,10 +41,6 @@ Groq Whisper (whisper-large-v3) → speech-to-text after wake word
 Kokoro ONNX                   → text-to-speech, with a custom amplitude-modulated "robot ripple" effect
 ```
 
-## Status
-
-Core functionality across all modules above is implemented. The project is currently in a **QA and stabilization phase** — systematically testing each feature and fixing bugs found along the way — before new features are added.
-
 ## Tech stack
 
 Python 3.12 · Groq API · Ollama · Vosk · Kokoro ONNX · Gmail API · Google Sheets (`gspread`) · `discord.py` · Enka.Network · `genshin.py` (HoYoLAB) · Ennead API · `psutil` · `matplotlib` · `BeautifulSoup`
