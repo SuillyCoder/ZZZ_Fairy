@@ -51,7 +51,9 @@ Python 3.12 · Groq API · Ollama · Vosk · Kokoro ONNX · Gmail API · Google 
 
 <img width="1907" height="1097" alt="image" src="https://github.com/user-attachments/assets/18f58bd2-1170-43b6-8728-276d4060dd57" />
 
-the program is run and presented via a simple terminal interface, accompanied by Fairy's ever-spinning icon, to get an immersive feel of Fairy's presence (like in the game), as well as have easier logging and output viewing. As of writing this, I'm not gonna lie: it feels pretty good being able to make this little project. Of course, I'm far from done. I have loads of other things planned, as well as some other things to polish up. Until then, this project is gonna be fun. 
+The program is run and presented via a simple terminal interface, accompanied by Fairy's ever-spinning icon, to get an immersive feel of Fairy's presence (like in the game), as well as have easier logging and output viewing. As of writing this, I'm not gonna lie: it feels pretty good being able to make this little project. Of course, I'm far from done. I have loads of other things planned, as well as some other things to polish up. Until then, this project is gonna be fun. 
+
+---
 
 
 
