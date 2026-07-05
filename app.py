@@ -1,12 +1,15 @@
 #ACTUAL APPLICATION ENTRY POINT
 import sys
 from PySide6.QtWidgets import QApplication
-from bootstrap.updater import check_and_update, restart
+from bootstrap.updater import check_and_update, restart, force_sync
 from gui.fairy_window import FairyWindow
 from gui.bridge import FairyWorker
 
 def main():
-    if check_and_update():
+    if "--force-sync" in sys.argv: #Force sync desperate measure
+        if force_sync():
+            restart()
+    elif check_and_update():
         restart()
 
     qt_app = QApplication(sys.argv)
