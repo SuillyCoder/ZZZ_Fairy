@@ -44,6 +44,8 @@ from gui.bridge import fairy_bridge
 import re as _re_path_extract
 import os, time
 
+from birthday import happy_birthday
+
 #MAIN EXECUTABLE CODE
 def run():
     # Boot up message
@@ -56,6 +58,10 @@ def run():
     start_battery_monitor(speak, poll_interval=60)
 
     speak(get_greet_ack())
+
+    #Checks if it's your birthday
+    happy_birthday()
+
     affirm_triggers = ["yes", "sure", "go ahead", "open", "yeah", "please", "yes please", "please do"]
     decline_triggers = ["no", "nope", "no thanks", "no fairy", "don't", "dont", "do not", "no please", "no thank you"]
 
