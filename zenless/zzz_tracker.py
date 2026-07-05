@@ -1,4 +1,4 @@
-import os, sys, asyncio, json, time, threading, requests, genshin, ssl, aiohttp
+import os, sys, asyncio, json, time, threading, requests, genshin, webbrowser
 
 #Import absolute filepath
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -149,6 +149,11 @@ def get_character_showcase() -> str: #Acquire showcase of ZZZ Character Roster
         f"{'s' if count != 1 else ''} in the public showcase, Master. "
         f"Top agents: {', '.join(named)}."
     )
+    try:
+        webbrowser.open(f"https://enka.network/zzz/{ZZZ_UID}")
+        spoken += "Here is a more detailed view of all your current agents, Master."
+    except Exception as e:
+        print(f"[ZZZ Browser Error]: {e}")
     return spoken
     
 # ========== HOYOLAB HELPERS ============= #

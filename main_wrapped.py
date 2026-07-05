@@ -453,7 +453,7 @@ def run():
             #Banter window (for additional follow up) -> will edit more during Phase 4
             followup  = get_user_input()
 
-            if followup and followup.strip() and classify_intent(followup) != "exit":
+            if followup and followup.strip() and classify_intent(followup, session_state) != "exit":
                     followup_intent = classify_intent(followup, session_state) #classify the intent of the follow up (if there is any)
                     followup_direct = handle_intent(followup_intent, followup) #Handle the intent of the followup directly
             

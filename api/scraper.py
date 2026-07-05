@@ -68,6 +68,16 @@ def scrape_cdn(limit: int = 5) -> list[str]:
         limit=limit,
     )
 
+#ABS-CBN
+def scrape_abscbn(limit: int = 5) -> list[str]:
+    print("[Scraper]: Fetching ABS-CBN Visayas headlines...")
+    return fetch_headlines(
+        url="https://news.abs-cbn.com/visayas",
+        tag="h3",                       # verify against current markup, ABS-CBN reskins occasionally
+        attrs={"class": "news-title"},  # placeholder class — inspect actual DOM before shipping
+        limit=limit,
+    )
+
 #PAGASA (bonus)
 def scrape_pagasa_bulletin() -> str: 
     print("[Scraper]: Fetching PAGASA bulletin for Cebu...")

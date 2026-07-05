@@ -1,6 +1,6 @@
 import requests, sys, os, random
 from groq import Groq
-from api.scraper import scrape_sunstar, scrape_cdn
+from api.scraper import scrape_sunstar, scrape_cdn, scrape_abscbn
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import NEWS_API_KEY, GROQ_MODEL, FAIRY_GROQ_API_KEY
@@ -13,10 +13,10 @@ CANDIDATE_POOL_SIZE = 15  # Larger pool to randomize from, so repeat asks don't 
 SEARCH_RESULT_CAP = 3  # Max articles to surface for a topic search
 
 def get_news() -> str:
-    headlines = _fetch_from_newsapi()
+    headlines = _fetch_from_scraper() #Fetch from the scraper first
     if not headlines:
-        print("[News]: NewsAPI returned no results. Trying scrapers...")
-        headlines = _fetch_from_scraper()
+        print("[News]: Local scrapers returned no results. Falling back to NewsAPI...")
+        headlines = _fetch_from_newsapi() #Then try the news API
 
     if not headlines:
         return ""

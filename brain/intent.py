@@ -30,7 +30,8 @@ def classify_intent(text: str, session_state=None) -> str:
             return resolved
         
     #Context Aware for News
-    if (session_state.last_intent == "news"
+    if (session_state is not None
+                and session_state.last_intent == "news"
                 and session_state.awaiting_followup
                 and not any(
                     re.search(r'\b' + re.escape(kw) + r'\b', text_lower)

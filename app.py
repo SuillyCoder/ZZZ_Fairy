@@ -13,8 +13,9 @@ def main():
     window = FairyWindow()
     window.show()
 
-    worker = FairyWorker()
-    worker.start()
+    worker = FairyWorker() #Initialize Fairy (instance of a program)
+    worker.start() #Start the program up
+    worker.finished.connect(qt_app.quit) #Quit the application
 
     sys.exit(qt_app.exec())
 
