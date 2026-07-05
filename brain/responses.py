@@ -67,7 +67,7 @@ SHUTDOWN_ACKS = [
     "Going offline. Stay safe, Master.",
     "Powering down. Catch you later, Master Proxy.",
     "Shutting down now. Don't miss me too much.",
-    "Deactivation in progress. See you soon, Master."
+    "Deactivation in progress. See you soon, Master.",
     "Exiting in progress. Be sure not to get into trouble."
 ]
 

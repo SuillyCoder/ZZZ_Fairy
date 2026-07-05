@@ -35,12 +35,14 @@ from device.performance_plot import plot_performance_metrics
 from device.security_audit import run_security_audit
 
 #==== Zenless Zone Zero: ======#
-#==== Zenless Zone Zero: ====#
 from zenless.zzz_tracker import handle_zzz, validate_hoyolab_cookies, start_zzz_monitor
+
+# ==== Bridge Import ===== #
+from gui.bridge import fairy_bridge
 
 # Extraction handler
 import re as _re_path_extract
-import os
+import os, time
 
 #MAIN EXECUTABLE CODE
 def run():
@@ -391,10 +393,11 @@ def run():
     # Main loop
     conversation_active = False  # True once we've had at least one real exchange this "wake" cycle
     while True:
+        if fairy_bridge.muted: #If muted
+            time.sleep(0.2) #Small delay
+            continue #Bypass and block out all voice input and continue as if nothing happened
         if conversation_active:
-            # Already mid-conversation — skip the wake-word standby step entirely.
-            # Listen directly for the next request; empty input here means
-            # "didn't catch that", not "waiting to be woken up".
+            # Listen directly for the next request; empty input here means "didn't catch that", not "waiting to be woken up".
             fairy_request = get_user_input()
             if not fairy_request:
                 speak(get_empty_ack())

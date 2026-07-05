@@ -39,13 +39,18 @@ def check_and_update() -> bool:
     if not remote or remote == local:
         return False
 
-    print("[Updater] New version detected on GitHub, syncing...")
+    print("[Updater] New version detected on GitHub, syncing local checkout...")
     _run(["git", "stash", "--include-untracked"])
     pull = _run(["git", "pull", "--ff-only", "origin", "main"])
     if pull is None or pull.returncode != 0:
         print("[Updater] Pull failed, staying on current version.")
         return False
-    print("[Updater] Updated to latest commit.")
+    
+    if getattr(sys, "frozen", False):
+        print("[Updater] Repo checkout updated, Master — but this running .exe "
+              "is still the old build. Rebuild with PyInstaller to apply the changes.")
+    else:
+        print("[Updater] Updated to latest commit.")
     return True
 
 def force_sync() -> bool: #Just in case first time automated sync does not work. 
