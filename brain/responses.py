@@ -71,6 +71,15 @@ SHUTDOWN_ACKS = [
     "Exiting in progress. Be sure not to get into trouble."
 ]
 
+#Sleepiness detection responses
+SLEEPY_ACKS = [
+    "Master, you're falling asleep again.",
+    "Didn't get that much sleep last night, Master?",
+    "Try to stay awake, Master.",
+    "Master, you tried to fall asleep 3 times now."
+]
+
+
 
 #Functions to return random response choice based on current state
 
@@ -91,6 +100,9 @@ def get_shutdown_ack() -> str: #Return string
 
 def get_decline_ack() -> str: #Return string
     return random.choice(DECLINE_ACKS) #Random wake response
+
+def get_sleepy_ack() -> str: 
+    return random.choice(SLEEPY_ACKS)
 
 
 

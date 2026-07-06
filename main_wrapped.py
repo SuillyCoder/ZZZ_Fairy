@@ -37,6 +37,9 @@ from device.security_audit import run_security_audit
 #==== Zenless Zone Zero: ======#
 from zenless.zzz_tracker import handle_zzz, validate_hoyolab_cookies, start_zzz_monitor
 
+# ======= Computer Vision ========= #
+from computer_vision.sleep_alarm.SleeperAlarm import handle_sleep_alarm
+
 # ==== Bridge Import ===== #
 from gui.bridge import fairy_bridge
 
@@ -386,6 +389,11 @@ def run():
                     speak("Opening the official Zenless page for events and notices, Master.")
                 else:
                     speak("Alright, Master. Let me know if you need anything else.")
+            return ""
+        
+        if intent == "sleep":
+            result = handle_sleep_alarm(fairy_request)
+            speak(result)
             return ""
         
         if intent == "reset":
