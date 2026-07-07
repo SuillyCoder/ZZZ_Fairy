@@ -1,9 +1,6 @@
 #Load in the model for STT
 from dotenv import load_dotenv
-import whisper, os, sys
-
-#Load in the model for STT
-model = whisper.load_model("base") #Base Model
+import os, sys
 
 #Retrieving file paths relative to .exe program's actual loction
 def get_base_dir():

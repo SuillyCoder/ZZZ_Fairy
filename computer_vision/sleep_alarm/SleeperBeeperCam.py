@@ -198,8 +198,12 @@ class SleeperBeeperCamera:
             self.cap.release()
         cv2.destroyAllWindows()
 
+        if hasattr(self, "detector") and self.detector:
+            self.detector.close()
+
         #Call the callback when stopping
         if self.on_stop_callback:
             self.on_stop_callback()
+        cv2.destroyAllWindows()
 
 

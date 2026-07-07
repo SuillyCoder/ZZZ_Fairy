@@ -11,7 +11,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 #Imported variables from config.py
-from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, model, HIGHPASS_CUTOFF, MIC_GAIN, MAX_RECORDING_DURATION
+from config import SAMPLE_RATE, CHANNELS, WAKE_WORDS, NOISE_PATTERNS, CHUNK_SIZE, SILENCE_DURATION, SILENCE_THRESHOLD, FAIRY_GROQ_API_KEY, VOSK_MODEL_PATH, HIGHPASS_CUTOFF, MIC_GAIN, MAX_RECORDING_DURATION
 #DSP filter function imports
 from scipy.signal import butter, lfilter
 

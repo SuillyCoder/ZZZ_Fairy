@@ -33,12 +33,10 @@ from automation.code_assistant import (review_code, generate_commented_version, 
 from device.system_info import (get_system_performance, check_battery_threshold, start_battery_monitor, preview_cache_clear, clear_cache, open_task_manager_performance)
 from device.performance_plot import plot_performance_metrics
 from device.security_audit import run_security_audit
+from device.memory_daemon import start_memory_monitor
 
 #==== Zenless Zone Zero: ======#
 from zenless.zzz_tracker import handle_zzz, validate_hoyolab_cookies, start_zzz_monitor
-
-# ======= Computer Vision ========= #
-from computer_vision.sleep_alarm.SleeperAlarm import handle_sleep_alarm
 
 # ==== Bridge Import ===== #
 from gui.bridge import fairy_bridge
@@ -59,6 +57,7 @@ def run():
     #Boot up asynchronous threads
     start_zzz_monitor(speak, poll_interval=3600)
     start_battery_monitor(speak, poll_interval=60)
+    start_memory_monitor(speak, threshold=80, poll_interval=30)
 
     speak(get_greet_ack())
 
@@ -392,6 +391,7 @@ def run():
             return ""
         
         if intent == "sleep":
+            from computer_vision.sleep_alarm.SleeperAlarm import handle_sleep_alarm
             result = handle_sleep_alarm(fairy_request)
             speak(result)
             return ""
