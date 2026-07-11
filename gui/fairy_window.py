@@ -18,3 +18,7 @@ class FairyWindow(QWidget):
 
         fairy_bridge.speaking_started.connect(lambda: self.orb.set_speaking(True))
         fairy_bridge.speaking_stopped.connect(lambda: self.orb.set_speaking(False))
+        fairy_bridge.toggle_visibility_requested.connect(self.toggle_visibility)
+
+    def toggle_visibility(self):
+        self.setVisible(not self.isVisible())

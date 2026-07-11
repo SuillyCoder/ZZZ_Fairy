@@ -20,6 +20,7 @@ INTENT_KEYWORDS = {
     "time":    ["what time is it", "time is it", "what's the time", "whats the time", "is the time", "current time", "tell me the time", "what day is it", "what's the date", "whats the date", "what is the date", "what's today's date", "todays date", "what day is today", "what's the day today", "what is today's date"],
     "sleep":   ["sleep", "sleepy", "drowsy", "feeling drowsy", "keep me awake", "stay awake", "droopy", "feeling sleepy"],
     "guard":   ["watch over", "watch", "keep watch", "guard", "safeguard", "guard my device", "look after", "look over"],
+    "hotkeys":   ["hotkeys", "hotkey", "shortcut", "shortcuts", "keyboard shortcuts", "specific commands", "commands", "list of commands"],
     "chat":    [],  # Default fallback — no keywords needed
 }
 

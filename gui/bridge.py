@@ -4,6 +4,7 @@ class FairyBridge(QObject): #Create bridge class for Fairy's voice to sync and b
     speaking_started = Signal()
     speaking_stopped = Signal()
     mute_toggled = Signal(bool) #Boolean signal to toggle on/off "mute button"
+    toggle_visibility_requested = Signal() #Signal to toggle icon visibility on and off
 
     def __init__ (self):
         super().__init__()

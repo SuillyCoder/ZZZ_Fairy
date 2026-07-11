@@ -1,0 +1,5 @@
+================ FAIRY HOTKEYS ====================
+
+- [Mute Voice Input (Toggle)]: Ctrl + Alt + M
+- [Hide Fairy Icon (Toggle)]: Ctrl + Alt + H
+- [End Transcription]: Ctrl + Alt + T

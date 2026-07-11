@@ -80,3 +80,11 @@ DISCORD_SERVER_ID = int(RAW_SERVER_ID) if RAW_SERVER_ID and RAW_SERVER_ID.isdigi
 ZZZ_UID = os.getenv('ZZZ_UID')
 HOYOLAB_LTUID = os.getenv('HOYOLAB_LTUID')
 HOYOLAB_LTOKEN = os.getenv('HOYOLAB_LTOKEN')
+
+# ========= Dataset Directories ======== #
+DATASET_DIR = os.path.join(BASE_DIR, "computer_vision", "intruder_alert", "dataset")
+VALIDATION_DIR = os.path.join(DATASET_DIR, "validation")
+OUTPUT_PATH = os.path.join(
+    BASE_DIR, "computer_vision", "intruder_alert", "reference_embeddings.pkl"
+)
+ 

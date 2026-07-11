@@ -1,4 +1,5 @@
-import threading 
+import threading
+from computer_vision import cv_state 
 from computer_vision.sleep_alarm.SleeperBeeperCam import SleeperBeeperCamera
 
 active_camera = None
@@ -8,6 +9,7 @@ def on_camera_stopped():
     global active_camera #Set the active camera variable as a global one
     with lock:
         active_camera = None #If the thread is locked, disable the camera
+        cv_state.deactivate("sleep")
 
 def handle_sleep_alarm(voice_query: str = "") -> str: 
     global active_camera
@@ -15,9 +17,11 @@ def handle_sleep_alarm(voice_query: str = "") -> str:
         if active_camera is not None:
             return "Sleep Alarm is already watching over you, Master."
         camera = SleeperBeeperCamera(on_stop_callback = on_camera_stopped)
+        cv_state.activate("sleep", camera.stop)   # force-stops Intruder Alert if it's running
         started = camera.camera_start(show_window=True)
 
         if not started:
+            cv_state.deactivate("sleep")
             return "I couldn't access the camera, Master. Please check it's not already in use."
  
         active_camera = camera

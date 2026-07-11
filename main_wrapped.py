@@ -41,6 +41,10 @@ from zenless.zzz_tracker import handle_zzz, validate_hoyolab_cookies, start_zzz_
 # ==== Bridge Import ===== #
 from gui.bridge import fairy_bridge
 
+# ==== Computer Vision ===== #
+from computer_vision.sleep_alarm.SleeperAlarm import handle_sleep_alarm
+from computer_vision.intruder_alert.intruder_alert import handle_intruder_alert
+
 # Extraction handler
 import re as _re_path_extract
 import os, time
@@ -391,10 +395,22 @@ def run():
             return ""
         
         if intent == "sleep":
-            from computer_vision.sleep_alarm.SleeperAlarm import handle_sleep_alarm
             result = handle_sleep_alarm(fairy_request)
             speak(result)
             return ""
+        
+        if intent == "guard":
+            result = handle_intruder_alert(fairy_request)
+            speak(result)
+            return ""
+        
+        if intent == "hotkeys":
+            with open("Fairy_Hotkeys.txt", "r") as file:
+                print(file.read())
+            speak("Here is the complete list of executable actions with their respective hotkeys, master")
+            return ""
+    
+
         
         if intent == "reset":
             history.reset()
