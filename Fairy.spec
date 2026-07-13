@@ -27,6 +27,8 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('torch')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+datas += [('computer_vision/intruder_alert/reference_embeddings.pkl', 'computer_vision/intruder_alert')]
+
 a = Analysis(
     ['app.py'],
     pathex=[],

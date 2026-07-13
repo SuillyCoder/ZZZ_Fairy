@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH
  
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -15,11 +16,32 @@ def _get_gmail_service():
     creds = None
 
     if os.path.exists(GMAIL_TOKEN_PATH): #try to load an existing token
-        creds =  Credentials.from_authorized_user_file(GMAIL_TOKEN_PATH, SCOPES)
-    
+        try: #If it exists, load the tokens in in
+            creds =  Credentials.from_authorized_user_file(GMAIL_TOKEN_PATH, SCOPES)
+        except Exception:
+            print("[Email]: Token file is corrupt or empty — deleting and re-authenticating...")
+            os.remove(GMAIL_TOKEN_PATH)
+            creds = None
+
     if not creds or not creds.valid: #If no valid tokens...
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            #Handler to handle expired tokens.json files
+            try: 
+                creds.refresh(Request())
+            except RefreshError: 
+                print("[Email]: Token expired or revoked by Google. Deleting stale token and re-authenticating...")
+                os.remove(GMAIL_TOKEN_PATH)
+                
+                #Reauthentication route here instead if ever it finds that the tokens are not available
+                if not os.path.exists(GMAIL_CREDENTIALS_PATH):
+                    raise FileNotFoundError(
+                        f"Gmail credentials not found at '{GMAIL_CREDENTIALS_PATH}'. "
+                        "Please download credentials.json from Google Cloud Console."
+                    )
+                flow = InstalledAppFlow.from_client_secrets_file(GMAIL_CREDENTIALS_PATH, SCOPES)
+                creds = flow.run_local_server(port=8081)
+                with open(GMAIL_TOKEN_PATH, "w") as token_file:
+                    token_file.write(creds.to_json())
         else:
             # First-time setup — opens browser for Google login
             if not os.path.exists(GMAIL_CREDENTIALS_PATH):
@@ -30,9 +52,9 @@ def _get_gmail_service():
             flow = InstalledAppFlow.from_client_secrets_file(GMAIL_CREDENTIALS_PATH, SCOPES)
             creds = flow.run_local_server(port=8081)  # Port 8081 (Dedicated port for the Email)
  
-        # Save the token for next time
-        with open(GMAIL_TOKEN_PATH, "w") as token_file:
-            token_file.write(creds.to_json())
+            # Save the token for next time
+            with open(GMAIL_TOKEN_PATH, "w") as token_file:
+                token_file.write(creds.to_json())
  
     return build("gmail", "v1", credentials=creds)
 
@@ -77,10 +99,11 @@ def get_unread_emails() -> str:
     except FileNotFoundError as e:
         print(f"[Email Error]: {e}")
         return "I couldn't find your Gmail credentials. Please set them up first, Master."
- 
+        
     except Exception as e:
         print(f"[Email Error]: {e}")
         return "I ran into a problem accessing your Gmail, Master."
+        #Fix needed: automatically try to restore tokens.json (for gmail at least) when finding out it expired
     
 def _extract_email_summary(service, message_id: str) -> str:
     try:

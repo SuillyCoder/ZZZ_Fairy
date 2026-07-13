@@ -13,6 +13,7 @@ from config import GMAIL_CREDENTIALS_PATH, SHEETS_TOKEN_PATH, EXPENSE_SHEET_ID, 
 # ── Google Auth ──
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError
 from google_auth_oauthlib.flow import InstalledAppFlow
 import gspread
 
@@ -95,11 +96,34 @@ def get_sheets_client() -> gspread.Client:
     creds = None #Set the credenmtials to an empty value
  
     if os.path.exists(SHEETS_TOKEN_PATH): #Check if the path to the sheets exists
-        creds = Credentials.from_authorized_user_file(SHEETS_TOKEN_PATH, SHEETS_SCOPES) #Acquire the sheets from the user with credentials
- 
+        try:
+            creds = Credentials.from_authorized_user_file(SHEETS_TOKEN_PATH, SHEETS_SCOPES) #Acquire the sheets from the user with credentials
+        except Exception: 
+            # Token file is corrupt or empty — delete and re-auth below
+            print("[Finance]: Sheets token file is corrupt or empty — deleting and re-authenticating...")
+            os.remove(SHEETS_TOKEN_PATH)
+            creds = None
     if not creds or not creds.valid: #Check for credential validity
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            #Handler to handle expired tokens
+            try: 
+                creds.refresh(Request())
+            except RefreshError: 
+                print("[Finance]: Sheets token expired or revoked by Google. Deleting stale token and re-authenticating...")
+                os.remove(SHEETS_TOKEN_PATH)
+
+                #Reauthentication path here instead
+                if not os.path.exists(GMAIL_CREDENTIALS_PATH):
+                    raise FileNotFoundError(
+                        f"credentials.json not found at '{GMAIL_CREDENTIALS_PATH}'. "
+                        "Download it from Google Cloud Console."
+                    )
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    GMAIL_CREDENTIALS_PATH, SHEETS_SCOPES
+                )
+                creds = flow.run_local_server(port=8080)
+                with open(SHEETS_TOKEN_PATH, "w") as f:
+                    f.write(creds.to_json())
         else:
             if not os.path.exists(GMAIL_CREDENTIALS_PATH):
                 raise FileNotFoundError(
@@ -111,8 +135,8 @@ def get_sheets_client() -> gspread.Client:
             )
             creds = flow.run_local_server(port=8080) # Port 8080 (Dedicated port for the Finance)
  
-        with open(SHEETS_TOKEN_PATH, "w") as f:
-            f.write(creds.to_json())
+            with open(SHEETS_TOKEN_PATH, "w") as f:
+                f.write(creds.to_json())
  
     return gspread.authorize(creds)
 
