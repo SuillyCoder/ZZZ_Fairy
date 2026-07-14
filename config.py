@@ -88,3 +88,6 @@ OUTPUT_PATH = os.path.join(
     BASE_DIR, "computer_vision", "intruder_alert", "reference_embeddings.pkl"
 )
  
+# ===== Transcription Settings =====
+TRANSCRIPTS_DIR = os.path.join(BASE_DIR, "transcripts")
+TRANSCRIPTION_SEGMENT_SECONDS = 8  # length of each chunk sent to Whisper; lower = snappier stop, more API calls

@@ -21,6 +21,7 @@ INTENT_KEYWORDS = {
     "sleep":   ["sleep", "sleepy", "drowsy", "feeling drowsy", "keep me awake", "stay awake", "droopy", "feeling sleepy"],
     "guard":   ["watch over", "watch", "keep watch", "guard", "safeguard", "guard my device", "look after", "look over"],
     "hotkeys":   ["hotkeys", "hotkey", "shortcut", "shortcuts", "keyboard shortcuts", "specific commands", "commands", "list of commands"],
+    "transcribe": ["transcribe", "transcription", "jot down", "record", "take down", "take note of", "take notes"],
     "chat":    [],  # Default fallback — no keywords needed
 }
 

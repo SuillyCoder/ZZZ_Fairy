@@ -49,7 +49,9 @@ from computer_vision.intruder_alert.intruder_alert import handle_intruder_alert
 import re as _re_path_extract
 import os, time
 
+# Other miscellaneous use cases
 from birthday import happy_birthday
+from transcription import run_transcription_session
 
 #MAIN EXECUTABLE CODE
 def run():
@@ -404,13 +406,16 @@ def run():
             speak(result)
             return ""
         
+        if intent == "transcribe":
+            result = run_transcription_session(fairy_request, speak, get_user_input)
+            speak(result)
+            return ""
+        
         if intent == "hotkeys":
             with open("Fairy_Hotkeys.txt", "r") as file:
                 print(file.read())
             speak("Here is the complete list of executable actions with their respective hotkeys, master")
             return ""
-    
-
         
         if intent == "reset":
             history.reset()

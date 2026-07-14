@@ -4,8 +4,9 @@ from PySide6.QtWidgets import QApplication
 from bootstrap.updater import check_and_update, restart, force_sync
 from gui.fairy_window import FairyWindow
 from gui.bridge import FairyWorker
-from gui.hotkeys import start_mute_hotkey_listener, start_clear_hotkey_listener, start_hide_icon_listener
-
+from gui.hotkeys import (start_mute_hotkey_listener, 
+                         start_clear_hotkey_listener, 
+                         start_hide_icon_listener)
 def main():
     if "--force-sync" in sys.argv: #Force sync desperate measure
         if force_sync():
