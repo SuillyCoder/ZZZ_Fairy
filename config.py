@@ -91,3 +91,9 @@ OUTPUT_PATH = os.path.join(
 # ===== Transcription Settings =====
 TRANSCRIPTS_DIR = os.path.join(BASE_DIR, "transcripts")
 TRANSCRIPTION_SEGMENT_SECONDS = 8  # length of each chunk sent to Whisper; lower = snappier stop, more API calls
+
+# ======== Spotify APIs ========== #
+SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+SPOTIFY_REDIRECT_URI  = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8090/callback")
+SPOTIFY_TOKEN_PATH    = os.path.join(BASE_DIR, "token_spotify.json")

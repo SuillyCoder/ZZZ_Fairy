@@ -22,6 +22,9 @@ INTENT_KEYWORDS = {
     "guard":   ["watch over", "watch", "keep watch", "guard", "safeguard", "guard my device", "look after", "look over"],
     "hotkeys":   ["hotkeys", "hotkey", "shortcut", "shortcuts", "keyboard shortcuts", "specific commands", "commands", "list of commands"],
     "transcribe": ["transcribe", "transcription", "jot down", "record", "take down", "take note of", "take notes"],
+    "music":   ["play music", "play some music", "play a song", "play song", "dj", "start dj", "play something", "pause the music", "pause music", "resume the music", "resume music", "unpause", "skip song", "skip track", "next song", "next track", "stop the music", "surprise me", "shuffle my music", "play spotify"],
+    "streaming": ["watch", "stream", "watch something", "watching something", "series", "movie", "anime"],
+    # "gaming": ["play", "game", "gaming", "playtime", "play something", "game on something", "play time"],
     "chat":    [],  # Default fallback — no keywords needed
 }
 

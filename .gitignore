@@ -17,6 +17,7 @@ test.wav
 # Folders only meant for me
 plots/
 test_fixtures/
+transcripts/
 
 # Credentials.json file for Google Auth
 credentials.json

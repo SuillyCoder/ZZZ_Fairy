@@ -45,6 +45,9 @@ from gui.bridge import fairy_bridge
 from computer_vision.sleep_alarm.SleeperAlarm import handle_sleep_alarm
 from computer_vision.intruder_alert.intruder_alert import handle_intruder_alert
 
+# ==== Entertainment ==== #
+from entertainment.music.music import handle_music
+
 # Extraction handler
 import re as _re_path_extract
 import os, time
@@ -415,6 +418,11 @@ def run():
             with open("Fairy_Hotkeys.txt", "r") as file:
                 print(file.read())
             speak("Here is the complete list of executable actions with their respective hotkeys, master")
+            return ""
+        
+        if intent == "music":
+            result = handle_music(fairy_request)
+            speak(result)
             return ""
         
         if intent == "reset":
