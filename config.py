@@ -97,3 +97,15 @@ SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 SPOTIFY_REDIRECT_URI  = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8090/callback")
 SPOTIFY_TOKEN_PATH    = os.path.join(BASE_DIR, "token_spotify.json")
+
+# ===== Streaming Settings =====
+NETFLIX_EXE_PATH = os.getenv("NETFLIX_EXE_PATH", "https://www.netflix.com/")
+STREAMING_OTHER_SITE_URL = os.getenv("STREAMING_OTHER_SITE_URL", "https://www.youtube.com")  # placeholder — swap later
+FIREFOX_PATH           = os.getenv("FIREFOX_PATH", r"C:\Program Files\Mozilla Firefox\firefox.exe")
+
+# VPN Settings — see entertainment/streaming/secure_session.py for context
+PROTONVPN_EXE_PATH = os.getenv("PROTONVPN_EXE_PATH")  # optional override — auto-detected if unset
+
+# ===== Steam Settings =====
+STEAM_API_KEY = os.getenv("STEAM_API_KEY")
+STEAM_ID      = os.getenv("STEAM_ID")  # your 64-bit SteamID

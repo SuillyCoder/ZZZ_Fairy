@@ -47,6 +47,8 @@ from computer_vision.intruder_alert.intruder_alert import handle_intruder_alert
 
 # ==== Entertainment ==== #
 from entertainment.music.music import handle_music
+from entertainment.streaming.streaming import handle_streaming
+from entertainment.gaming.gaming import handle_gaming
 
 # Extraction handler
 import re as _re_path_extract
@@ -425,6 +427,16 @@ def run():
             speak(result)
             return ""
         
+        if intent == "streaming":
+            result = handle_streaming(fairy_request, speak, get_user_input)
+            speak(result)
+            return ""
+        
+        if intent == "gaming":
+            result = handle_gaming(fairy_request, speak, get_user_input)
+            speak(result)
+            return ""
+
         if intent == "reset":
             history.reset()
             session_state.reset()

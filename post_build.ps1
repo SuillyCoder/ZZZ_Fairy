@@ -9,4 +9,5 @@ Copy-Item .env dist\Fairy\.env -Force
 Copy-Item credentials.json dist\Fairy\credentials.json -Force
 Copy-Item token.json dist\Fairy\token.json -Force -ErrorAction SilentlyContinue
 Copy-Item token_sheets.json dist\Fairy\token_sheets.json -Force -ErrorAction SilentlyContinue
+Copy-Item token_spotify.json dist\Fairy\token_spotify.json -Force -ErrorAction SilentlyContinue
 Write-Host "Post-build copy complete." -ForegroundColor Green

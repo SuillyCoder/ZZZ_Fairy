@@ -66,8 +66,14 @@ Coming soon (not available yet):
 - Auto-farming or playing Zenless Zone Zero on the user's behalf
 - Multi-step task chaining across different capabilities in one request
 
+
 """.strip()
 
+NETFLIX_WATCHLIST = """
+Anime: Gachiakuta, Dandadan, Orb: On the Movements on the Earth
+Action: The Adam Project, Mortal Engines
+Romance: To all the boys I've loved before, My Future You
+""".strip()
 
 # Backwards-compatible module-level constant — built once at import time.
 # main.py imports this name directly, so existing call sites keep working.

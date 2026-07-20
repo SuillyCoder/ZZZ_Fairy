@@ -23,8 +23,8 @@ INTENT_KEYWORDS = {
     "hotkeys":   ["hotkeys", "hotkey", "shortcut", "shortcuts", "keyboard shortcuts", "specific commands", "commands", "list of commands"],
     "transcribe": ["transcribe", "transcription", "jot down", "record", "take down", "take note of", "take notes"],
     "music":   ["play music", "play some music", "play a song", "play song", "dj", "start dj", "play something", "pause the music", "pause music", "resume the music", "resume music", "unpause", "skip song", "skip track", "next song", "next track", "stop the music", "surprise me", "shuffle my music", "play spotify"],
-    "streaming": ["watch", "stream", "watch something", "watching something", "series", "movie", "anime"],
-    # "gaming": ["play", "game", "gaming", "playtime", "play something", "game on something", "play time"],
+    "streaming": ["netflix", "watch something", "watch a movie", "watch a show", "watch a series", "stream something", "open netflix", "watch tv", "that site", "watch tonight"],
+    "gaming": ["recommend a game", "recommend me a game", "recommend me something to play", "what should i play", "play a game", "suggest a game", "steam recommendation", "what game should i play", "recommend something to play", "game recommendation", "game recommendations", "any game recommendations"],
     "chat":    [],  # Default fallback — no keywords needed
 }
 
@@ -57,4 +57,9 @@ def classify_intent(text: str, session_state=None) -> str:
             if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                 if len(keyword) > best_len: #Longest/most specific keyword wins
                     best_intent, best_len = intent, len(keyword)
+    
+    #Filters the best intent that involves the word "play"
+    if best_intent is None and re.match(r'^play\s', text_lower): 
+        return "music"
+    
     return best_intent if best_intent is not None else "chat"
