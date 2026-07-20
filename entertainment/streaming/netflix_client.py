@@ -27,7 +27,7 @@ def find_netflix_exe():
     return None
 
 def open_netflix_app(): 
-    exe_path = find_netflix_exe #Extract the ProtonVPN file
+    exe_path = find_netflix_exe() #Extract the ProtonVPN file
     if not exe_path:
         raise RuntimeError("Couldn't locate ProtonVPN.exe — set PROTONVPN_EXE_PATH in your .env to the exact path.")
     os.startfile(exe_path) #Run a subprocess to open the shortcut path

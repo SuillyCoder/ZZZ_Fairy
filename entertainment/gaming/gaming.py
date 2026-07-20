@@ -54,9 +54,7 @@ def _choose_recommendation(games: list):
     mode = random.choice(["recent", "backlog"])
 
     if mode == "recent" and recent_candidates:
-        recent_sorted = sorted(recent_candidates, key=lambda g: g["playtime_2weeks"], reverse=True)
-        top_pool = recent_sorted[:min(3, len(recent_sorted))]  # top 3 most-recently-played, not just #1
-        return random.choice(top_pool), "recent"
+        return max(recent_candidates, key=lambda g: g["playtime_2weeks"]), "recent"
     if backlog_candidates:
         return random.choice(backlog_candidates), "backlog"
     return random.choice(games), "random"  # Fallback if neither bucket had candidates

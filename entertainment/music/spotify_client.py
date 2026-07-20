@@ -47,7 +47,7 @@ def get_active_device_id(): #Returns an active device ID, or the first available
 def find_artist_uri(artist_name: str): #Helper function in order to find certain artists
     sp = get_spotify_client() #Acquire the client
     results = sp.search(q=f"artist:{artist_name}", type="artist", limit=1) #Return just ONE
-    items = results.get("artists", {}.get("items", [])) #Get all the corresponding item results
+    items = results.get("artists", {}).get("items", []) #Get all the corresponding item results
     if not items: 
         return None, None
     return items[0]["uri"], items[0]["name"] #Acquire all the items under a specific artist

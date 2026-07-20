@@ -9,10 +9,12 @@ def find_protonvpn_exe():
     return matches[0] if matches else None #Return a match if it finds it.
 
 def open_protonvpn_app(): 
-    exe_path = find_protonvpn_exe #Extract the ProtonVPN file
+    exe_path = find_protonvpn_exe() #Extract the ProtonVPN file
     if not exe_path:
         raise RuntimeError("Couldn't locate ProtonVPN.exe — set PROTONVPN_EXE_PATH in your .env to the exact path.")
     subprocess.Popen([exe_path]) #Run a subprocess to open the exe path
 
 def open_browser_to(url: str):
+    if not FIREFOX_PATH or not os.path.isfile(FIREFOX_PATH):
+        raise RuntimeError(f"Firefox not found at '{FIREFOX_PATH}' — check FIREFOX_PATH in your .env (must be the .exe, not a shortcut).")
     subprocess.Popen([FIREFOX_PATH, url]) #Open the site url in Firefox via the Popen subproces

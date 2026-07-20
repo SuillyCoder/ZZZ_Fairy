@@ -77,15 +77,13 @@ def _handle_other_site() -> str:
     except Exception as e:
         print(f"[Streaming - VPN Launch Error]: {e}")
         vpn_opened = False
-        return "I couldn't open ProtonVPN for you, Master. Looks like you'll have to proceed with caution here"
-
     try:
         open_browser_to(STREAMING_OTHER_SITE_URL)
     except Exception as e:
         print(f"[Streaming - Browser Error]: {e}")
         return "The VPN's up, Master, but I couldn't get the browser open. Might need a manual check."
 
-    return _dynamic_line("other_site")
+    return _dynamic_line("other_site_manual" if vpn_opened else "other_site_manual_novpn")
 
 def _dynamic_line(branch: str, mood=None, titles=None) -> str:
     context_map = {
