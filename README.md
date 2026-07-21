@@ -29,21 +29,25 @@
 | **Web Info** | [`api/`](api/README.md) | Live weather and local news (API + scraper fallback) |
 | **Automation** | [`automation/`](automation/README.md) | Gmail, Discord, expense tracking, AI-assisted code review |
 | **Device Control** | [`device/`](device/README.md) | CPU/RAM/battery monitoring, cache clearing, security audits, performance plotting |
+| **Computer Vision** | [`computer_vision/`](computer_vision/README.md) | Sleep alarm (drowsiness detection) and intruder alert (face recognition + device lock) |
+| **Entertainment** | [`entertainment/`](entertainment/README.md) | Spotify music control, Netflix/streaming launcher, Steam game recommendations |
 | **Zenless Zone Zero** | [`zenless/`](zenless/README.md) | Account status, character showcase, banners, news — for the game itself |
 
 ## Model orchestration at a glance
-
+ 
 ```
-Groq (llama-3.1-8b-instant)  → persona, conversation, intent-adjacent language tasks
-Ollama (lfm2.5, local)        → heavy/data-crunching tasks (code review, financial analysis)
-Vosk                          → offline wake-word detection
+Groq (llama-3.1-8b-instant)    → persona, conversation, intent-adjacent language tasks
+Ollama (lfm2.5, local)          → heavy/data-crunching tasks (code review, financial analysis)
+Vosk                            → offline wake-word detection
 Groq Whisper (whisper-large-v3) → speech-to-text after wake word
-Kokoro ONNX                   → text-to-speech, with a custom amplitude-modulated "robot ripple" effect
+Kokoro ONNX                     → text-to-speech, with a custom amplitude-modulated "robot ripple" effect
+facenet-pytorch (InceptionResnetV1, VGGFace2) → face identity matching for Intruder Alert
+MediaPipe FaceLandmarker        → eye landmark extraction for Sleep Alarm
 ```
 
 ## Tech stack
 
-Python 3.12 · Groq API · Ollama · Vosk · Kokoro ONNX · Gmail API · Google Sheets (`gspread`) · `discord.py` · Enka.Network · `genshin.py` (HoYoLAB) · Ennead API · `psutil` · `matplotlib` · `BeautifulSoup`
+Python 3.12 · Groq API · Ollama · Vosk · Kokoro ONNX · Gmail API · Google Sheets (`gspread`) · `discord.py` · Enka.Network · `genshin.py` (HoYoLAB) · Ennead API · `psutil` · `matplotlib` · `BeautifulSoup` · `spotipy` (Spotify) · Steam Web API · `facenet-pytorch` · `mediapipe` · OpenCV · `pygame`
 
 ---
 
